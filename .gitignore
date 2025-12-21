@@ -1,0 +1,11 @@
+# Ignoriere Cache-, Log-, CSV- und Excel-Dateien
+.*cache/
+*cache/
+__pycache__/
+*.log
+logs/
+*.csv
+*.xls
+*.xlsx
+*.xlsm
+*.xlsb
