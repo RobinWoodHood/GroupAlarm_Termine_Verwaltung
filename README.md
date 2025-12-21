@@ -43,21 +43,24 @@ Wichtiger Hinweis:
 ## Schnellstart 🚀
 
 1. Passe `example_usage.py` an (Dateipfad, Mapping, Zeitzone).
-2. Teste erstmal im **Dry-Run**-Modus, um Payloads zu prüfen (keine HTTP-Anfragen):
+1. Passe `label_mapper.py` an (Die Label ID kann man bei GroupAlarm unter `konfiguration>labels` auslesen.)
+1. Teste erstmal im **Dry-Run**-Modus, um Payloads zu prüfen (keine HTTP-Anfragen):
 
-```python
-# In example_usage.py -> Runner(..., dry_run=True)
-python example_usage.py
-```
+    ```python
+    # In example_usage.py -> Runner(..., dry_run=True)
+    python example_usage.py
+    ```
 
-3. Wenn alles passt, führe das Skript ohne `dry_run` aus. Das Skript fragt nach deinem **Personal-Access-Token** (wenn nicht als Argument übergeben):
+1. Wenn alles passt, führe das Skript ohne `dry_run` aus. Das Skript fragt nach deinem **Personal-Access-Token** (wenn nicht als Argument übergeben):
 
-```bash
-python example_usage.py
-```
+    ```bash
+    python example_usage.py
+    ```
 
 Beim Erstellen werden `groupalarm_id` und `ga_importer_token` (Standardspalten) **zurück in die CSV/Excel** geschrieben, sodass bei einem nächsten Lauf die Zeilen erkannt und aktualisiert werden (anstatt neu erzeugt zu werden).
-**WICHTIG** Wenn die Excel/CSV noch offen ist, werden die `groupalarm_id` und `ga_importer_token` nicht geschrieben. **Also immer die Excel schließen!!**
+
+**WICHTIG:** Wenn die Excel/CSV noch offen ist, werden die `groupalarm_id` und `ga_importer_token` nicht geschrieben. **Also immer die Excel schließen!!**
+
 ---
 
 ## Konzeptübersicht 🧭
