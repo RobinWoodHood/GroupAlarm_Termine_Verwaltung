@@ -56,6 +56,7 @@ Wichtiger Hinweis:
     ```bash
     python example_usage.py
     ```
+1. Den persönlichen API Token kannst du in deinen GroupAlarm Account unter `Profil (oben rechts)>Sicherheit`erstellen. **Wichtig: Gib diesen Token niemanden weiter** Er hat die gleichen Berechtigungen wie dein Account.
 
 Beim Erstellen werden `groupalarm_id` und `ga_importer_token` (Standardspalten) **zurück in die CSV/Excel** geschrieben, sodass bei einem nächsten Lauf die Zeilen erkannt und aktualisiert werden (anstatt neu erzeugt zu werden).
 
