@@ -142,6 +142,10 @@ class Mapper:
         notificationDate = None
         if "notificationDate" in self.mapping:
             notificationDate = self._eval("notificationDate", row)
+        
+        feedbackDeadline = None
+        if "feedbackDeadline" in self.mapping:
+            feedbackDeadline = self._eval("feedbackDeadline", row)
 
         isPublic = self._eval("isPublic", row)
         if isPublic is None:
@@ -158,6 +162,7 @@ class Mapper:
             keepLabelParticipantsInSync=True,
             reminder=int(reminder) if reminder is not None else None,
             notificationDate=notificationDate,
+            feedbackDeadline=feedbackDeadline,
             timezone=self.defaults.get("timezone", "UTC"),
         )
         return appt

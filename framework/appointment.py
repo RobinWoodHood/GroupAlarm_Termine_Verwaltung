@@ -17,6 +17,7 @@ class Appointment:
     keepLabelParticipantsInSync: bool = True
     reminder: Optional[int] = None  # minutes
     notificationDate: Optional[datetime] = None
+    feedbackDeadline: Optional[datetime] = None
     timezone: str = "UTC"
     participants: List[Dict[str, Any]] = field(default_factory=list)
 
@@ -66,6 +67,8 @@ class Appointment:
             payload["reminder"] = self.reminder
         if self.notificationDate is not None:
             payload["notificationDate"] = self.notificationDate.astimezone().isoformat()
+        if self.feedbackDeadline is not None:
+            payload["feedbackDeadline"] = self.feedbackDeadline.astimezone().isoformat()
         # For update operations the API expects the appointment `id` to be present in the body
         if getattr(self, 'id', None) is not None:
             payload['id'] = self.id
