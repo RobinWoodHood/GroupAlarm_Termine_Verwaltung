@@ -1,0 +1,939 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "description": "The appointment service implements all appointment and reminder functions for GroupAlarm",
+    "title": "Appointment API specification",
+    "version": "680a5bdf474613965ad223d12ee304a2418b5439",
+    "x-logo": {
+      "href": "/",
+      "url": "https://www.groupalarm.com/images/logo.svg"
+    }
+  },
+  "paths": {
+    "/appointment": {
+      "post": {
+        "description": "Create an appointment with the passed parameters",
+        "tags": [
+          "appointment"
+        ],
+        "operationId": "CreateAppointment",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Appointment"
+        },
+        "responses": {
+          "201": {
+            "description": "Appointment successfully created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Appointment"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "database error"
+          }
+        }
+      }
+    },
+    "/appointment/{id}": {
+      "get": {
+        "description": "Returns the appointment with the requested id\nA specific occurrence of a recurring appointment can be requested by passing a timestamp, otherwise the first\noccurrence is returned.",
+        "tags": [
+          "appointment"
+        ],
+        "operationId": "GetAppointment",
+        "parameters": [
+          {
+            "description": "id of an appointment",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "timestamp of a recurring appointment",
+            "name": "timestamp",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "requested appointment (occurrence)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Appointment"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "appointment or specific occurrence not found"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      },
+      "put": {
+        "description": "Update an appointment with the passed parameters",
+        "tags": [
+          "appointment"
+        ],
+        "operationId": "UpdateAppointment",
+        "parameters": [
+          {
+            "description": "id of an appointment",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "decides which appointments should be updated when handling recurrence",
+            "name": "strategy",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "single",
+                "upcoming",
+                "all"
+              ],
+              "default": "all"
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Appointment"
+        },
+        "responses": {
+          "200": {
+            "description": "Appointment was successfully updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Appointment"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "database error"
+          }
+        }
+      },
+      "delete": {
+        "description": "Deletes the appointment with the passed id",
+        "tags": [
+          "appointment"
+        ],
+        "operationId": "DeleteAppointment",
+        "parameters": [
+          {
+            "description": "id of an appointment",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "decides which appointments should be deleted when handling recurrence",
+            "name": "strategy",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "single",
+                "upcoming",
+                "all"
+              ],
+              "default": "all"
+            }
+          },
+          {
+            "description": "decides which appointments should be deleted when handling deletion of a single or all upcoming recurring appointments",
+            "name": "time",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Appointment was successfully deleted"
+          },
+          "500": {
+            "description": "database error"
+          }
+        }
+      }
+    },
+    "/appointment/{id}/feedback": {
+      "put": {
+        "description": "Update an appointment with the passed parameters",
+        "tags": [
+          "appointment"
+        ],
+        "operationId": "UpdateAppointmentParticipantFeedback",
+        "parameters": [
+          {
+            "description": "id of an appointment",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppointmentParticipant"
+              }
+            }
+          },
+          "description": "appointment participant payload",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Appointment was successfully updated"
+          },
+          "500": {
+            "description": "database error"
+          }
+        }
+      }
+    },
+    "/appointments": {
+      "get": {
+        "description": "Get paginated personal appointments",
+        "tags": [
+          "appointments"
+        ],
+        "operationId": "GetPersonalAppointments",
+        "deprecated": true,
+        "parameters": [
+          {
+            "description": "max. amount of entries in list",
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "amount of entries to skip",
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "filter upcoming and completed appointments",
+            "name": "show",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "upcoming",
+                "completed"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated appointments for this user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppointmentList"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "database error"
+          }
+        }
+      }
+    },
+    "/appointments/calendar": {
+      "get": {
+        "description": "Get a list of appointments in the given time range for an organization or the current user",
+        "tags": [
+          "appointments"
+        ],
+        "operationId": "GetAppointments",
+        "parameters": [
+          {
+            "description": "start of appointment time range",
+            "name": "start",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "description": "end of appointment time range",
+            "name": "end",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "description": "list appointments of organization or current user",
+            "name": "type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "personal",
+                "organization"
+              ]
+            }
+          },
+          {
+            "description": "id of organization to query appointments for, only required for type \"organization\"",
+            "name": "organization_id",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "list of appointments filtered by parameters and ordered by start time",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Appointment"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "missing or invalid query parameter"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      }
+    },
+    "/appointments/ical/personal/{token}": {
+      "get": {
+        "description": "Returns all personal appointments in ical/ics format",
+        "tags": [
+          "ical"
+        ],
+        "operationId": "GetPersonalICal",
+        "parameters": [
+          {
+            "description": "token to access personal appointments",
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Personal appointments in ical/ics format"
+          },
+          "500": {
+            "description": "database error"
+          }
+        }
+      }
+    },
+    "/appointments/ical/public/{token}": {
+      "get": {
+        "description": "Returns all public appointments in ical/ics format",
+        "tags": [
+          "ical"
+        ],
+        "operationId": "GetPublicICal",
+        "parameters": [
+          {
+            "description": "an organization token",
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Public appointments in ical/ics format"
+          },
+          "404": {
+            "description": "token doesn't match the token of any organization"
+          },
+          "500": {
+            "description": "database error"
+          }
+        }
+      }
+    },
+    "/appointments/ical/public_url/{id}": {
+      "get": {
+        "description": "Returns a url for the public appointments for an organization",
+        "tags": [
+          "ical"
+        ],
+        "operationId": "GetPublicICalURL",
+        "parameters": [
+          {
+            "description": "the id of an organization",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "URL containing the organization token for public appointment iCal",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/URL"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "user is not authorized to get the url for this organization"
+          },
+          "500": {
+            "description": "database error"
+          }
+        }
+      }
+    },
+    "/appointments/ical/token/personal": {
+      "get": {
+        "description": "Returns the personal ical token",
+        "tags": [
+          "ical"
+        ],
+        "operationId": "GetPersonalToken",
+        "responses": {
+          "200": {
+            "description": "Personal token to access personal appointments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ICalToken"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "database error"
+          }
+        }
+      }
+    },
+    "/appointments/ical/{token}/personal": {
+      "post": {
+        "description": "Creates or updates the personal ical token",
+        "tags": [
+          "ical"
+        ],
+        "operationId": "UpsertPersonalToken",
+        "parameters": [
+          {
+            "description": "token to access personal appointments",
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Created token to access the personal appointments in ics format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ICalToken"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "database error"
+          }
+        }
+      }
+    },
+    "/appointments/notification": {
+      "get": {
+        "description": "Returns which notification types are disabled for the current user",
+        "tags": [
+          "appointments"
+        ],
+        "operationId": "GetDisabledNotificationTypes",
+        "responses": {
+          "200": {
+            "description": "current user's disabled notification types",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisabledNotificationTypes"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "no user-data found in request"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      },
+      "put": {
+        "description": "Sets which notification types are disabled for the current user",
+        "tags": [
+          "appointments"
+        ],
+        "operationId": "SetDisabledNotificationTypes",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DisabledNotificationTypes"
+              }
+            }
+          },
+          "description": "disabled notification types",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "successfully stored current user's disabled notification types",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisabledNotificationTypes"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "no user-data found in request"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      }
+    },
+    "/appointments/organization/{organization}": {
+      "get": {
+        "description": "Get paginated personal appointments",
+        "tags": [
+          "appointments"
+        ],
+        "operationId": "GetOrganizationAppointments",
+        "deprecated": true,
+        "parameters": [
+          {
+            "description": "id of an organization",
+            "name": "organization",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "max. amount of entries in list",
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "amount of entries to skip",
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "filter upcoming and completed appointments",
+            "name": "show",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "upcoming",
+                "completed"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated appointments for this user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppointmentList"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "database error"
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "API-TOKEN": [
+        "[]"
+      ]
+    },
+    {
+      "Personal-Access-Token": [
+        "[]"
+      ]
+    }
+  ],
+  "servers": [
+    {
+      "url": "https://app.groupalarm.com/api/v1"
+    }
+  ],
+  "components": {
+    "requestBodies": {
+      "Appointment": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Appointment"
+            }
+          }
+        },
+        "description": "appointment payload",
+        "required": true
+      }
+    },
+    "securitySchemes": {
+      "API-TOKEN": {
+        "description": "You can generate an API-Token in the permissions-settings of your organization.\nAll requests will be performed in the scope of this organization. Requests regarding users will fail.\n",
+        "type": "apiKey",
+        "name": "API-TOKEN",
+        "in": "header"
+      },
+      "Personal-Access-Token": {
+        "description": "You can generate a Personal Access Token in your profile settings.\nAll requests will be performed as the user who created the token, with permissions as configured in each organization.",
+        "type": "apiKey",
+        "name": "Personal-Access-Token",
+        "in": "header"
+      }
+    },
+    "schemas": {
+      "Appointment": {
+        "description": "Appointment contains the information of a single appointment",
+        "type": "object",
+        "required": [
+          "organizationID",
+          "name",
+          "description",
+          "startDate",
+          "endDate"
+        ],
+        "properties": {
+          "creationDate": {
+            "x-go-name": "CreationDate"
+          },
+          "creator": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "CreatorID"
+          },
+          "description": {
+            "type": "string",
+            "x-go-name": "Description"
+          },
+          "endDate": {
+            "x-go-name": "EndDate"
+          },
+          "feedbackDeadline": {
+            "description": "FeedbackDeadline, if set, is the time after which feedback will no longer be accepted. It may only be set for\nnon-recurring appointments, i.e. if Recurrence is nil.",
+            "default": "null",
+            "x-go-name": "FeedbackDeadline"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "ID"
+          },
+          "isPublic": {
+            "description": "Appointments that are marked private will not be exported to a public iCal",
+            "type": "boolean",
+            "x-go-name": "IsPublic"
+          },
+          "keepLabelParticipantsInSync": {
+            "description": "KeepLabelParticipantsInSync ensures that added and removed users from an associated label are automatically added\nand removed from the appointment. Otherwise they will only be updated when updating the appointment.",
+            "type": "boolean",
+            "x-go-name": "KeepLabelParticipantsInSync"
+          },
+          "labelIDs": {
+            "description": "Optional list of labels. All current participants will be invited to the appointment.\nParticipants present in multiple labels will be matched to first label in list.\nParticipants present in a label and participant list will be stored independent from labels.",
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "x-go-name": "LabelIDs"
+          },
+          "name": {
+            "type": "string",
+            "x-go-name": "Name"
+          },
+          "notificationDate": {
+            "description": "NotificationDate will, if set, send appointment invitations at the specified point in time instead of when\ncreating the appointment.",
+            "default": "null",
+            "x-go-name": "NotificationDate"
+          },
+          "organizationID": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "OrganizationID"
+          },
+          "participants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AppointmentParticipant"
+            },
+            "x-go-name": "Participants"
+          },
+          "recurrence": {
+            "$ref": "#/components/schemas/AppointmentRecurrence"
+          },
+          "reminder": {
+            "description": "Reminder, if set, is the time in minutes after which a push notification will be sent to all participants who didn't\ndenied the appointment.",
+            "type": "integer",
+            "format": "int64",
+            "maximum": 10080,
+            "minimum": 0,
+            "x-go-name": "Reminder"
+          },
+          "startDate": {
+            "x-go-name": "StartDate"
+          },
+          "timezone": {
+            "description": "Timezone used for DST computation from IANA Time Zone Database (e.g. \"Europe/Berlin\").",
+            "type": "string",
+            "default": "UTC",
+            "x-go-name": "Timezone"
+          }
+        },
+        "x-go-package": "groupalarm/go/appointment/api/services"
+      },
+      "AppointmentFeedbackStatus": {
+        "description": "AppointmentFeedbackStatus describes the current feedback status of an user",
+        "type": "integer",
+        "format": "int64",
+        "x-go-package": "groupalarm/go/appointment/api/services"
+      },
+      "AppointmentList": {
+        "description": "AppointmentList contains the total amount of appointments and a slice of appointments for pagination",
+        "type": "object",
+        "properties": {
+          "appointments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Appointment"
+            },
+            "x-go-name": "Appointments"
+          },
+          "totalAppointments": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "TotalAppointments"
+          }
+        },
+        "x-go-package": "groupalarm/go/appointment/api/services"
+      },
+      "AppointmentParticipant": {
+        "description": "AppointmentParticipant describes an invited user inside of an appointment",
+        "type": "object",
+        "properties": {
+          "appointmentID": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "AppointmentID"
+          },
+          "feedback": {
+            "$ref": "#/components/schemas/AppointmentFeedbackStatus"
+          },
+          "feedbackMessage": {
+            "type": "string",
+            "x-go-name": "FeedbackMessage"
+          },
+          "labelID": {
+            "description": "If LabelID is set, this AppointmentParticipant was automatically invited using a label and can only be removed\nby removing the corresponding label from the appointment or user.",
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "LabelID"
+          },
+          "startDate": {
+            "description": "If StartDate is set, this AppointmentParticipant describes feedback for a specific occurrence of an appointment.\nOtherwise it is valid for each occurrence.",
+            "x-go-name": "StartDate"
+          },
+          "userID": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID"
+          }
+        },
+        "x-go-package": "groupalarm/go/appointment/api/services"
+      },
+      "AppointmentRecurrence": {
+        "description": "AppointmentRecurrence describes how an appointment is repeated",
+        "type": "object",
+        "required": [
+          "frequency",
+          "interval"
+        ],
+        "properties": {
+          "cancellations": {
+            "description": "Cancellations contains a list of all cancelled occurrences. This field is read-only and can only be changed by\ndeleting a single instance of an existing recurring appointment.",
+            "type": "array",
+            "items": {},
+            "x-go-name": "Cancellations",
+            "readOnly": true
+          },
+          "count": {
+            "description": "Count defines how many repetitions will occur. Pass null for no limit. Might not be used together with Until.",
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "Count"
+          },
+          "days": {
+            "description": "Days is used for weekly repetitions only and is required in this case. It includes all weekdays on which this\nappointment should occur. 0 = Sunday, 1 = Monday, ..., 6 = Saturday.",
+            "type": "array",
+            "items": {},
+            "x-go-name": "Days"
+          },
+          "frequency": {
+            "$ref": "#/components/schemas/AppointmentRecurrenceFrequency"
+          },
+          "interval": {
+            "description": "Interval describes how often an appointment is repeated (e.g. every second week)",
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "x-go-name": "Interval"
+          },
+          "until": {
+            "description": "Until defines the date of the last occurrence. Pass null for no limit. Might not be used together with Count.",
+            "x-go-name": "Until"
+          },
+          "week": {
+            "description": "Week is used for monthly repetitions only. It describes the week of the month on which this appointment should\noccur. 1 = first week, 2 = second week, -1 = last week, etc. Pass null to use the exact same day.",
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "Week"
+          }
+        },
+        "x-go-package": "groupalarm/go/appointment/api/services"
+      },
+      "AppointmentRecurrenceFrequency": {
+        "description": "AppointmentRecurrenceFrequency describes the frequency of a recurring appointment",
+        "type": "string",
+        "x-go-package": "groupalarm/go/appointment/api/services"
+      },
+      "DisabledNotificationTypes": {
+        "type": "object",
+        "title": "DisabledNotificationTypes contains which types of notification are disabled for a certain user.",
+        "properties": {
+          "appDisabled": {
+            "type": "boolean",
+            "x-go-name": "AppDisabled"
+          },
+          "emailDisabled": {
+            "type": "boolean",
+            "x-go-name": "EmailDisabled"
+          },
+          "userID": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID"
+          }
+        },
+        "x-go-package": "groupalarm/go/appointment/api/services"
+      },
+      "ICalToken": {
+        "description": "ICalToken contains the personal token for the ical access",
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "x-go-name": "Token"
+          }
+        },
+        "x-go-package": "groupalarm/go/appointment/api/services"
+      },
+      "URL": {
+        "description": "URL describes a URL path",
+        "type": "object",
+        "properties": {
+          "URL": {
+            "type": "string"
+          }
+        },
+        "x-go-package": "groupalarm/go/appointment/api/services"
+      }
+    }
+  }
+}

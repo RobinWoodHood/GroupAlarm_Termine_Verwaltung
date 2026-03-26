@@ -147,3 +147,168 @@ def test_get_appointment_returns_json(monkeypatch):
     monkeypatch.setattr('framework.client.requests.get', fake_get)
     res = client.get_appointment(42)
     assert res == {'id': 42, 'name': 'foo'}
+
+
+# --- T011: list_labels tests ---
+
+
+def test_list_labels_returns_labels(monkeypatch):
+    client = GroupAlarmClient(token='sekret', dry_run=False)
+
+    class DummyResp:
+        status_code = 200
+        def json(self):
+            return {"labels": [{"id": 1, "name": "Fire", "color": "#FF0000", "organizationID": 100}], "total": 1}
+        def raise_for_status(self):
+            return None
+
+    def fake_get(url, headers, params, timeout):
+        assert "labels" in url
+        assert params["organization"] == 100
+        assert params["all"] == "true"
+        return DummyResp()
+
+    monkeypatch.setattr('framework.client.requests.get', fake_get)
+    labels = client.list_labels(organization_id=100)
+    assert len(labels) == 1
+    assert labels[0]["name"] == "Fire"
+
+
+def test_list_labels_with_type(monkeypatch):
+    client = GroupAlarmClient(token='sekret', dry_run=False)
+
+    class DummyResp:
+        status_code = 200
+        def json(self):
+            return {"labels": [], "total": 0}
+        def raise_for_status(self):
+            return None
+
+    captured_params = {}
+    def fake_get(url, headers, params, timeout):
+        captured_params.update(params)
+        return DummyResp()
+
+    monkeypatch.setattr('framework.client.requests.get', fake_get)
+    client.list_labels(organization_id=100, label_type="all")
+    assert captured_params.get("type") == "all"
+
+
+# --- T012: delete_appointment tests ---
+
+
+def test_delete_appointment_dry_run():
+    client = GroupAlarmClient(token=None, dry_run=True)
+    result = client.delete_appointment(id_=5)
+    assert result is None
+
+
+def test_delete_appointment_requires_token():
+    client = GroupAlarmClient(token=None, dry_run=False)
+    with pytest.raises(ValueError, match="No token"):
+        client.delete_appointment(id_=5)
+
+
+def test_delete_appointment_sends_delete(monkeypatch):
+    client = GroupAlarmClient(token='sekret', dry_run=False)
+
+    class DummyResp:
+        status_code = 200
+
+    def fake_delete(url, headers, params, timeout):
+        assert url.endswith('/appointment/5')
+        assert params["strategy"] == "all"
+        return DummyResp()
+
+    monkeypatch.setattr('framework.client.requests.delete', fake_delete)
+    client.delete_appointment(id_=5)
+
+
+def test_delete_appointment_with_strategy(monkeypatch):
+    client = GroupAlarmClient(token='sekret', dry_run=False)
+
+    class DummyResp:
+        status_code = 200
+
+    captured = {}
+    def fake_delete(url, headers, params, timeout):
+        captured.update(params)
+        return DummyResp()
+
+    monkeypatch.setattr('framework.client.requests.delete', fake_delete)
+    client.delete_appointment(id_=5, strategy="single", time_="2026-01-06T19:00:00Z")
+    assert captured["strategy"] == "single"
+    assert captured["time"] == "2026-01-06T19:00:00Z"
+
+
+def test_delete_appointment_invalid_strategy():
+    client = GroupAlarmClient(token='sekret', dry_run=False)
+    with pytest.raises(ValueError, match="Invalid strategy"):
+        client.delete_appointment(id_=5, strategy="invalid")
+
+
+def test_delete_appointment_not_found(monkeypatch):
+    from framework.client import AppointmentNotFound
+    client = GroupAlarmClient(token='sekret', dry_run=False)
+
+    class DummyResp:
+        status_code = 404
+        text = 'not found'
+
+    def fake_delete(url, headers, params, timeout):
+        return DummyResp()
+
+    monkeypatch.setattr('framework.client.requests.delete', fake_delete)
+    with pytest.raises(AppointmentNotFound):
+        client.delete_appointment(id_=99)
+
+
+# --- T013: update_appointment strategy tests ---
+
+
+def test_update_appointment_with_strategy(monkeypatch):
+    client = GroupAlarmClient(token='sekret', dry_run=False)
+    appt = make_appt()
+    appt.id = 10
+
+    class DummyResp:
+        status_code = 200
+        def json(self):
+            return {'id': 10}
+
+    captured_url = []
+    def fake_put(url, json, headers, timeout):
+        captured_url.append(url)
+        return DummyResp()
+
+    monkeypatch.setattr('framework.client.requests.put', fake_put)
+    client.update_appointment(appt, strategy="single")
+    assert "?strategy=single" in captured_url[0]
+
+
+def test_update_appointment_default_strategy_no_param(monkeypatch):
+    client = GroupAlarmClient(token='sekret', dry_run=False)
+    appt = make_appt()
+    appt.id = 10
+
+    class DummyResp:
+        status_code = 200
+        def json(self):
+            return {'id': 10}
+
+    captured_url = []
+    def fake_put(url, json, headers, timeout):
+        captured_url.append(url)
+        return DummyResp()
+
+    monkeypatch.setattr('framework.client.requests.put', fake_put)
+    client.update_appointment(appt, strategy="all")
+    assert "?strategy=" not in captured_url[0]
+
+
+def test_update_appointment_invalid_strategy():
+    client = GroupAlarmClient(token='sekret', dry_run=False)
+    appt = make_appt()
+    appt.id = 10
+    with pytest.raises(ValueError, match="Invalid strategy"):
+        client.update_appointment(appt, strategy="bad")

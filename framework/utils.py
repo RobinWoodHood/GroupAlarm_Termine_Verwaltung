@@ -1,14 +1,24 @@
 from __future__ import annotations
-from datetime import datetime, time, timedelta
-from typing import Optional
+from datetime import datetime, time, timedelta, timezone
+from typing import NamedTuple, Optional
 
 from dateutil import parser as dateutil_parser
 
 try:
     # Python 3.9+
     from zoneinfo import ZoneInfo
-except Exception:
+except Exception:  # pragma: no cover - fallback only used on older platforms
     ZoneInfo = None
+
+DE_DATETIME_FORMAT = "%d.%m.%Y %H:%M"
+DEFAULT_DISPLAY_TZ = "Europe/Berlin"
+
+
+class DisplayFormatResult(NamedTuple):
+    """Result returned by :func:`format_de_datetime` including warning metadata."""
+
+    text: str
+    warning: Optional[str] = None
 
 
 def parse_date(value, hour: Optional[int] = None, tz: str = "UTC", fmt: Optional[str] = None) -> datetime:
@@ -92,6 +102,60 @@ def relative_notification(start: datetime, days_before: int = 0, minutes_before:
         The computed notification datetime.
     """
     return start - timedelta(days=days_before, minutes=minutes_before)
+
+
+def _get_zoneinfo(tz_name: str):
+    if ZoneInfo is not None:
+        try:
+            return ZoneInfo(tz_name)
+        except Exception:
+            pass
+    try:
+        from dateutil.tz import gettz
+
+        return gettz(tz_name)
+    except Exception:
+        return None
+
+
+def _ensure_aware(dt: datetime) -> datetime:
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
+def format_de_datetime(
+    dt: datetime,
+    *,
+    tz_name: str = DEFAULT_DISPLAY_TZ,
+    fallback_format: str = DE_DATETIME_FORMAT,
+) -> DisplayFormatResult:
+    """Format a datetime for German display, returning a fallback when conversion fails."""
+
+    warning: Optional[str] = None
+    aware = _ensure_aware(dt)
+    target_tz = _get_zoneinfo(tz_name)
+    if target_tz is None:
+        warning = f"Unbekannte Zeitzone: {tz_name}"
+        return DisplayFormatResult(aware.isoformat(), warning)
+    try:
+        localized = aware.astimezone(target_tz)
+        return DisplayFormatResult(localized.strftime(fallback_format), None)
+    except Exception as exc:  # pragma: no cover - defensive fallback
+        warning = f"Konvertierung nach {tz_name} fehlgeschlagen: {exc}"
+        return DisplayFormatResult(aware.isoformat(), warning)
+
+
+def parse_de_datetime(
+    date_text: str,
+    time_text: str,
+    *,
+    tz_name: str = DEFAULT_DISPLAY_TZ,
+) -> datetime:
+    """Parse German date/time fragments into an aware datetime."""
+
+    value = f"{date_text.strip()} {time_text.strip()}"
+    return parse_date(value, fmt=DE_DATETIME_FORMAT, tz=tz_name)
 
 
 def clean_text(text: Optional[str], remove_newlines: bool = True, collapse_whitespace: bool = True) -> Optional[str]:

@@ -1,0 +1,43 @@
+{
+  "appointments": [
+    {
+      "id": 1001,
+      "title": "Bereitschaftsübung",
+      "description": "Frühschicht koordiniert die neue Lageerkundung.",
+      "start": "2026-04-02T07:30:00Z",
+      "end": "2026-04-02T09:00:00Z",
+      "notification": "2026-04-02T06:45:00Z",
+      "reminderMinutes": 45,
+      "labels": [201, 202],
+      "timezone": "UTC"
+    },
+    {
+      "id": 1002,
+      "title": "Sirenenwartung",
+      "description": "Wartungsteam inspiziert alle Anlagen im Westen.",
+      "start": "2026-04-03T13:00:00Z",
+      "end": "2026-04-03T15:30:00Z",
+      "notification": "2026-04-03T12:00:00Z",
+      "reminderMinutes": 60,
+      "labels": [202, 203],
+      "timezone": "UTC"
+    },
+    {
+      "id": 1003,
+      "title": "Akut-Einsatz",
+      "description": "Spontaneinsatz ohne optionale Felder zur Nullzustands-Prüfung",
+      "start": "2026-04-05T18:00:00Z",
+      "end": "2026-04-05T19:15:00Z",
+      "notification": null,
+      "reminderMinutes": 0,
+      "labels": [],
+      "timezone": "UTC"
+    }
+  ],
+  "labels": [
+    { "id": 201, "name": "Bereitschaft", "color": "#0FA3B1" },
+    { "id": 202, "name": "Lageerkundung", "color": "#F25F5C" },
+    { "id": 203, "name": "Technik", "color": "#FFE066" },
+    { "id": 204, "name": "Nachbesprechung", "color": "#247BA0" }
+  ]
+}

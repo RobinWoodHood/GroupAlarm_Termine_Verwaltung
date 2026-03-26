@@ -10,3 +10,31 @@ logs/
 *.xlsm
 *.xlsb
 *productive.py
+
+# Python
+*.pyc
+.venv/
+venv/
+dist/
+*.egg-info/
+
+# Environment
+.env*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+
+# Config (sensitive)
+.groupalarm.toml
+
+.specify/**
+.github/agents/**
+.github/prompts/**

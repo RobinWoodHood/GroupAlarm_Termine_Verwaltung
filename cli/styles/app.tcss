@@ -1,0 +1,83 @@
+/* GroupAlarm TUI — Textual CSS */
+
+Screen {
+    background: $background;
+}
+
+/* ---------- Dry-run banner ---------- */
+
+#dry-run-banner {
+    dock: top;
+    height: 1;
+    background: yellow;
+    color: black;
+    text-align: center;
+    display: none;
+}
+
+#dry-run-banner.visible {
+    display: block;
+}
+
+/* ---------- Layout grid ---------- */
+
+#main-content {
+    height: 1fr;
+}
+
+#left-pane {
+    width: 3fr;
+    min-width: 40;
+}
+
+/* ---------- Detail panel ---------- */
+
+DetailPanel {
+    width: 1fr;
+    min-width: 30;
+    padding: 1 2;
+    border-left: solid $primary;
+    background: $surface;
+    overflow-y: auto;
+}
+
+DetailPanel.is-active {
+    border-left: solid $accent;
+}
+
+DetailPanel #detail-content {
+    padding: 0 0 1 0;
+}
+
+/* ---------- Filter bar ---------- */
+
+FilterBar {
+    layout: vertical;
+    height: auto;
+    max-height: 14;
+    dock: top;
+    padding: 0 1;
+    background: $surface;
+    border-bottom: solid $primary;
+}
+
+/* ---------- Appointment list ---------- */
+
+AppointmentList {
+    height: 1fr;
+}
+
+DataTable {
+    height: 1fr;
+}
+
+DataTable > .datatable--cursor {
+    background: $accent;
+}
+
+/* ---------- Toast / notification overrides ---------- */
+
+Toast.-warning {
+    background: $warning;
+    color: $text;
+}

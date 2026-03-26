@@ -3,6 +3,33 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 
+REMINDER_MIN_MINUTES = 0
+REMINDER_MAX_MINUTES = 10_080  # exactly seven days per API contract
+REMINDER_UNIT_FACTORS = {
+    "minutes": 1,
+    "hours": 60,
+    "days": 60 * 24,
+    "weeks": 60 * 24 * 7,
+}
+
+
+def validate_reminder_minutes(total_minutes: int) -> None:
+    """Ensure reminder minutes remain within the backend's 0–10 080 minute window."""
+
+    if not (REMINDER_MIN_MINUTES <= total_minutes <= REMINDER_MAX_MINUTES):
+        raise ValueError(
+            f"Reminder must be between {REMINDER_MIN_MINUTES} and {REMINDER_MAX_MINUTES} minutes"
+        )
+
+
+def convert_reminder_to_minutes(value: int, unit: str) -> int:
+    unit_key = unit.lower()
+    if unit_key not in REMINDER_UNIT_FACTORS:
+        raise ValueError(f"Unsupported reminder unit '{unit}'")
+    total = int(value) * REMINDER_UNIT_FACTORS[unit_key]
+    validate_reminder_minutes(total)
+    return total
+
 
 @dataclass
 class Appointment:
@@ -20,6 +47,7 @@ class Appointment:
     feedbackDeadline: Optional[datetime] = None
     timezone: str = "UTC"
     participants: List[Dict[str, Any]] = field(default_factory=list)
+    recurrence: Optional[Dict[str, Any]] = field(default_factory=lambda: None)
 
     def validate(self) -> None:
         """Validate appointment fields.

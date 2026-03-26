@@ -13,6 +13,7 @@ Eine **leichte Bibliothek**, um Termine aus CSV/Excel in GroupAlarm zu importier
 - Optionen & Konfiguration ⚙️
 - Troubleshooting & Hinweise ⚠️
 - Tests 🔬
+- API-Referenz 📚
 
 ---
 
@@ -168,6 +169,17 @@ pytest -q
 ```
 
 Die Tests verwenden Mock-HTTP-Responses, um API-Aufrufe abzukapseln.
+
+---
+
+## API-Referenz 📚
+
+- Eine vollständige Übersicht aller Klassen, Methoden und Funktionen findest du in [`docs/API_REFERENCE.md`](docs/API_REFERENCE.md).
+- Die Datei wird automatisch über das Skript `scripts/generate_api_docs.py` erzeugt:
+  ```bash
+  python scripts/generate_api_docs.py --root . --output docs/API_REFERENCE.md
+  ```
+- Bitte prüfe die Referenz, bevor du neue Features implementierst oder bestehende Klassen erweiterst — der nächste Copilot-Agent liest diesen Abschnitt, um den aktuellen API-Zustand zu verstehen.
 
 ---
 

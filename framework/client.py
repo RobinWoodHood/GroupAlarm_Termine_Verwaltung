@@ -1,15 +1,12 @@
 import logging
 import time
-from typing import Optional
+from typing import Optional, List, Dict, Any
 
 import requests
 
 from .appointment import Appointment
 
 logger = logging.getLogger(__name__)
-
-
-from typing import Optional
 
 
 class AppointmentNotFound(Exception):
@@ -104,7 +101,7 @@ class GroupAlarmClient:
                 logger.exception("Failed to create appointment after %d attempts", attempt)
                 raise
 
-    def update_appointment(self, appt: Appointment, retries: int = 2, backoff: float = 1.0):
+    def update_appointment(self, appt: Appointment, strategy: str = "all", retries: int = 2, backoff: float = 1.0):
         """Update an existing appointment identified by ``appt.id``.
 
         Parameters
@@ -132,8 +129,12 @@ class GroupAlarmClient:
         """
         if not getattr(appt, 'id', None):
             raise ValueError("Appointment.id is required for update")
+        if strategy not in ("single", "upcoming", "all"):
+            raise ValueError(f"Invalid strategy: {strategy!r}")
         payload = appt.to_api_payload()
         url = f"{self.base_url}/appointment/{appt.id}"
+        if strategy != "all":
+            url = f"{url}?strategy={strategy}"
         if self.dry_run:
             logger.info("DRY-RUN: would PUT to %s with payload:\n%s", url, payload)
             return {"dry_run": True, "payload": payload, "id": appt.id}
@@ -236,3 +237,68 @@ class GroupAlarmClient:
         resp = requests.get(url, headers=self.headers, params=params)
         resp.raise_for_status()
         return resp.json()
+
+    def delete_appointment(
+        self,
+        id_: int,
+        strategy: str = "all",
+        time_: Optional[str] = None,
+        retries: int = 2,
+        backoff: float = 1.0,
+    ) -> None:
+        if strategy not in ("single", "upcoming", "all"):
+            raise ValueError(f"Invalid strategy: {strategy!r}")
+        url = f"{self.base_url}/appointment/{id_}"
+        params: Dict[str, str] = {"strategy": strategy}
+        if time_:
+            params["time"] = time_
+
+        if self.dry_run:
+            logger.info("DRY-RUN: would DELETE %s with strategy=%s", url, strategy)
+            return None
+
+        if not self.token:
+            raise ValueError("No token provided for non-dry run")
+
+        _backoff = backoff
+        for attempt in range(1, retries + 1):
+            try:
+                resp = requests.delete(url, headers=self.headers, params=params, timeout=10)
+                if resp.status_code == 200:
+                    logger.info("Appointment %s deleted (strategy=%s)", id_, strategy)
+                    return None
+                if resp.status_code == 404:
+                    raise AppointmentNotFound(id_)
+                if 500 <= resp.status_code < 600 and attempt < retries:
+                    logger.warning("Server error %s, retrying in %.1fs...", resp.status_code, _backoff)
+                    time.sleep(_backoff)
+                    _backoff *= 2
+                    continue
+                resp.raise_for_status()
+            except AppointmentNotFound:
+                raise
+            except requests.RequestException as exc:
+                if attempt < retries:
+                    logger.warning("Request failed: %s, retrying in %.1fs...", exc, _backoff)
+                    time.sleep(_backoff)
+                    _backoff *= 2
+                    continue
+                raise
+
+    def list_labels(
+        self,
+        organization_id: int,
+        label_type: str = "normal",
+    ) -> List[Dict[str, Any]]:
+        url = f"{self.base_url}/labels"
+        params: Dict[str, Any] = {
+            "organization": organization_id,
+            "all": "true",
+        }
+        if label_type != "normal":
+            params["type"] = label_type
+
+        resp = requests.get(url, headers=self.headers, params=params, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        return data.get("labels", []) if isinstance(data, dict) else data
