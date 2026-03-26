@@ -279,14 +279,15 @@ class DetailPanel(Widget):
                 "  [b]↑/↓[/b]     Navigate list\n"
                 "  [b]Enter[/b]   Select appointment\n"
                 "  [b]e[/b]       Edit mode\n"
-                "  [b]/[/b]       Focus filter bar\n"
+                "  [b]Ctrl+T[/b]  Focus date filter\n"
                 "  [b]Ctrl+F[/b]  Search\n"
                 "  [b]n[/b]       New appointment\n"
                 "  [b]d[/b]       Delete selected\n"
                 "  [b]x[/b]       Export to Excel\n"
-                "  [b]s[/b]       Save changes\n"
+                "  [b]Ctrl+S[/b]  Save changes\n"
                 "  [b]Esc[/b]     Cancel edit\n"
-                "  [b]?[/b]       Help\n"
+                "  [b]F1[/b]      Help\n"
+                "  [b]Ctrl +/−[/b] Zoom in/out (terminal)\n"
                 "  [b]q[/b]       Quit",
                 classes="help-text",
                 id="detail-content",
@@ -477,7 +478,7 @@ class DetailPanel(Widget):
         if appt.participants:
             lines.append(f"[dim]Participants (read-only):[/dim] {len(appt.participants)}")
 
-        lines.append("\n[dim]Press [b]s[/b] to save, [b]Esc[/b] to cancel[/dim]")
+        lines.append("\n[dim]Press [b]Ctrl+S[/b] to save, [b]Esc[/b] to cancel[/dim]")
         if self._dirty:
             lines.append("[yellow]Unsaved changes[/yellow]")
 
@@ -657,14 +658,15 @@ class DetailPanel(Widget):
             "  [b]↑/↓[/b]     Navigate list\n"
             "  [b]Enter[/b]   Select appointment\n"
             "  [b]e[/b]       Edit mode\n"
-            "  [b]/[/b]       Focus filter bar\n"
+            "  [b]Ctrl+T[/b]  Focus date filter\n"
             "  [b]Ctrl+F[/b]  Search\n"
             "  [b]n[/b]       New appointment\n"
             "  [b]d[/b]       Delete selected\n"
             "  [b]x[/b]       Export to Excel\n"
-            "  [b]s[/b]       Save changes\n"
+            "  [b]Ctrl+S[/b]  Save changes\n"
             "  [b]Esc[/b]     Cancel edit\n"
-            "  [b]?[/b]       Help\n"
+            "  [b]F1[/b]      Help\n"
+            "  [b]Ctrl +/−[/b] Zoom in/out (terminal)\n"
             "  [b]q[/b]       Quit"
         )
 

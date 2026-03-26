@@ -37,18 +37,8 @@ def test_navigation_state_tracks_cursor_and_filter_focus():
 
 def test_filter_controls_preview_and_expansion():
     controls = FilterControls(available_labels=_make_labels())
-    # preview mode defaults to five-visible toggles
-    assert controls.preview_mode is True
-    assert len(controls.visible_labels) == controls.preview_limit
-    assert controls.hidden_label_count == 2
-
-    controls.expand_labels()
-    assert controls.preview_mode is False
+    # all labels are always visible (no preview limit)
     assert len(controls.visible_labels) == 7
-    assert controls.hidden_label_count == 0
-
-    controls.collapse_to_preview()
-    assert controls.preview_mode is True
 
 
 def test_filter_controls_toggle_selection_and_cleanup():

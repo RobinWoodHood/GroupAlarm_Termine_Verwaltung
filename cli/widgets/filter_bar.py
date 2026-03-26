@@ -39,11 +39,13 @@ class FilterBar(Widget):
     }
     FilterBar #label-scroll {
         height: auto;
-        max-height: 3;
+        max-height: 9;
         scrollbar-size: 1 1;
     }
     FilterBar #label-buttons {
-        layout: horizontal;
+        layout: grid;
+        grid-size: 5;
+        grid-gutter: 0 1;
         height: auto;
         width: 1fr;
     }
@@ -64,8 +66,8 @@ class FilterBar(Widget):
     }
     FilterBar .label-toggle {
         min-width: 12;
-        height: 1;
-        margin: 0 1 0 0;
+        height: 3;
+        margin: 0;
         border: none;
         padding: 0;
         background: $surface-darken-1;

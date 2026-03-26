@@ -59,7 +59,10 @@ class HelpScreen(ModalScreen[None]):
                 "[b]General[/b]\n"
                 "  Escape      Cancel edit / close dialog\n"
                 "  F1          This help screen\n"
-                "  q           Quit (with unsaved changes check)\n",
+                "  q           Quit (with unsaved changes check)\n"
+                "\n"
+                "[b]Terminal[/b]\n"
+                "  Ctrl +/−    Zoom in/out\n",
                 id="help-body",
             )
             yield Button("Close", id="help-close", variant="primary")
