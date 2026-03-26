@@ -55,6 +55,26 @@ class ImporterToken:
         return m.group(0)
 
     @staticmethod
+    def strip_from_text(text: Optional[str]) -> tuple[str, Optional[str]]:
+        """Remove a GA-IMPORTER token from *text* and return the clean text plus the token.
+
+        Returns
+        -------
+        tuple[str, str | None]
+            ``(clean_text, token)`` — *token* is ``None`` when no token was found.
+        """
+        if not text:
+            return (text or "", None)
+        m = TOKEN_RE.search(text)
+        if not m:
+            return (text, None)
+        token = m.group(0)
+        clean = text[:m.start()] + text[m.end():]
+        # Remove trailing/leading whitespace and blank lines left by removal
+        clean = clean.strip()
+        return (clean, token)
+
+    @staticmethod
     def validate_token(token: str) -> bool:
         """Validate token checksum.
 

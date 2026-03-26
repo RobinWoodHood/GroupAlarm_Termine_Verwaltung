@@ -1,12 +1,21 @@
 """Confirmation dialogs for mutations — diff view, unsaved changes guard, recurrence strategy."""
 from __future__ import annotations
 
-from typing import Dict, List, Optional
+from typing import ClassVar, Dict, List, Optional
 
 from textual.app import ComposeResult
+from textual.binding import Binding, BindingType
 from textual.containers import Horizontal, Vertical
 from textual.screen import ModalScreen
 from textual.widgets import Button, Static, Label
+
+
+def _underline_key(label: str, key: str) -> str:
+    """Return *label* with the first occurrence of *key* underlined."""
+    idx = label.lower().find(key.lower())
+    if idx == -1:
+        return f"[u]{key.upper()}[/u] {label}"
+    return label[:idx] + f"[u]{label[idx]}[/u]" + label[idx + 1:]
 
 SECTION_MAP = {
     "name": "Grunddaten",
@@ -73,14 +82,24 @@ class ConfirmationDialog(ModalScreen[bool]):
     #confirmation-buttons Button {
         margin: 0 2;
     }
+    #confirmation-hint {
+        text-align: center;
+        color: $text-muted;
+        margin-top: 1;
+    }
     """
+
+    BINDINGS: ClassVar[list[BindingType]] = [
+        Binding("escape", "cancel", "Cancel", show=False),
+    ]
 
     def __init__(
         self,
         title: str,
         body: str,
         warning: str = "",
-        confirm_label: str = "Confirm",
+        confirm_label: str = "Save",
+        confirm_key: str = "",
         cancel_label: str = "Cancel",
         **kwargs,
     ) -> None:
@@ -90,16 +109,33 @@ class ConfirmationDialog(ModalScreen[bool]):
         self._warning = warning
         self._confirm_label = confirm_label
         self._cancel_label = cancel_label
+        # Derive shortcut key from the first letter of confirm_label
+        self._confirm_key = (confirm_key or confirm_label[0]).lower()
 
     def compose(self) -> ComposeResult:
+        confirm_display = _underline_key(self._confirm_label, self._confirm_key)
         with Vertical(id="confirmation-container"):
             yield Static(self._title, id="confirmation-title")
             yield Static(self._body, id="confirmation-body")
             if self._warning:
                 yield Static(self._warning, id="confirmation-warning")
             with Horizontal(id="confirmation-buttons"):
-                yield Button(self._confirm_label, id="confirm-yes", variant="error")
-                yield Button(self._cancel_label, id="confirm-no", variant="primary")
+                yield Button(confirm_display, id="confirm-yes", variant="error")
+                yield Button("Cancel", id="confirm-no", variant="primary")
+            yield Static(
+                f"[dim]{self._confirm_key.upper()} = {self._confirm_label}  ·  Esc = Cancel[/dim]",
+                id="confirmation-hint",
+            )
+
+    def on_mount(self) -> None:
+        # Dynamically bind the confirm key
+        self._bindings.bind(self._confirm_key, "confirm", self._confirm_label, show=False)
+
+    def action_confirm(self) -> None:
+        self.dismiss(True)
+
+    def action_cancel(self) -> None:
+        self.dismiss(False)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         self.dismiss(event.button.id == "confirm-yes")
@@ -174,6 +210,12 @@ class ConfirmationDialog(ModalScreen[bool]):
 class UnsavedChangesDialog(ModalScreen[str]):
     """Modal dialog for unsaved changes — Save, Discard, or Cancel."""
 
+    BINDINGS: ClassVar[list[BindingType]] = [
+        Binding("s", "do_save", "Save", show=False),
+        Binding("d", "do_discard", "Discard", show=False),
+        Binding("escape", "do_cancel", "Cancel", show=False),
+    ]
+
     DEFAULT_CSS = """
     UnsavedChangesDialog {
         align: center middle;
@@ -190,6 +232,11 @@ class UnsavedChangesDialog(ModalScreen[str]):
         text-style: bold;
         margin-bottom: 1;
     }
+    #unsaved-hint {
+        text-align: center;
+        color: $text-muted;
+        margin-top: 1;
+    }
     #unsaved-buttons {
         align: center middle;
         height: auto;
@@ -205,9 +252,19 @@ class UnsavedChangesDialog(ModalScreen[str]):
             yield Static("[b]Unsaved Changes[/b]", id="unsaved-title")
             yield Static("You have unsaved changes. What would you like to do?")
             with Horizontal(id="unsaved-buttons"):
-                yield Button("Save", id="unsaved-save", variant="success")
-                yield Button("Discard", id="unsaved-discard", variant="error")
-                yield Button("Cancel", id="unsaved-cancel", variant="primary")
+                yield Button(_underline_key("Save", "s"), id="unsaved-save", variant="success")
+                yield Button(_underline_key("Discard", "d"), id="unsaved-discard", variant="error")
+                yield Button(_underline_key("Cancel", "c"), id="unsaved-cancel", variant="primary")
+            yield Static("[dim]S = Save  ·  D = Discard  ·  Esc = Cancel[/dim]", id="unsaved-hint")
+
+    def action_do_save(self) -> None:
+        self.dismiss("save")
+
+    def action_do_discard(self) -> None:
+        self.dismiss("discard")
+
+    def action_do_cancel(self) -> None:
+        self.dismiss("cancel")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         result_map = {
@@ -220,6 +277,13 @@ class UnsavedChangesDialog(ModalScreen[str]):
 
 class RecurrenceStrategyDialog(ModalScreen[str]):
     """Modal dialog for choosing recurrence strategy (single/upcoming/all)."""
+
+    BINDINGS: ClassVar[list[BindingType]] = [
+        Binding("t", "choose_single", "This occurrence", show=False),
+        Binding("u", "choose_upcoming", "This and upcoming", show=False),
+        Binding("a", "choose_all", "All occurrences", show=False),
+        Binding("escape", "choose_cancel", "Cancel", show=False),
+    ]
 
     DEFAULT_CSS = """
     RecurrenceStrategyDialog {
@@ -245,6 +309,11 @@ class RecurrenceStrategyDialog(ModalScreen[str]):
         width: 100%;
         margin-bottom: 1;
     }
+    #strategy-hint {
+        text-align: center;
+        color: $text-muted;
+        margin-top: 1;
+    }
     """
 
     def compose(self) -> ComposeResult:
@@ -252,10 +321,23 @@ class RecurrenceStrategyDialog(ModalScreen[str]):
             yield Static("[b]Recurring Appointment[/b]", id="strategy-title")
             yield Static("This is a recurring appointment. Choose the scope:")
             with Vertical(id="strategy-buttons"):
-                yield Button("This occurrence only", id="strategy-single", variant="primary")
-                yield Button("This and upcoming", id="strategy-upcoming", variant="warning")
-                yield Button("All occurrences", id="strategy-all", variant="error")
-                yield Button("Cancel", id="strategy-cancel")
+                yield Button(_underline_key("This occurrence only", "t"), id="strategy-single", variant="primary")
+                yield Button(_underline_key("This and upcoming", "u"), id="strategy-upcoming", variant="warning")
+                yield Button(_underline_key("All occurrences", "a"), id="strategy-all", variant="error")
+                yield Button(_underline_key("Cancel", "c"), id="strategy-cancel")
+            yield Static("[dim]T = This only  ·  U = Upcoming  ·  A = All  ·  Esc = Cancel[/dim]", id="strategy-hint")
+
+    def action_choose_single(self) -> None:
+        self.dismiss("single")
+
+    def action_choose_upcoming(self) -> None:
+        self.dismiss("upcoming")
+
+    def action_choose_all(self) -> None:
+        self.dismiss("all")
+
+    def action_choose_cancel(self) -> None:
+        self.dismiss("")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         result_map = {

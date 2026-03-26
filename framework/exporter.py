@@ -52,10 +52,11 @@ def export_appointments(
     ws.append(COLUMNS)
 
     for appt in appointments:
-        token = ImporterToken.find_in_text(appt.description) or ""
+        clean_desc, token = ImporterToken.strip_from_text(appt.description)
+        token = token or ""
         row = [
             appt.name,
-            appt.description,
+            clean_desc,
             _format_datetime(appt.startDate, timezone),
             _format_datetime(appt.endDate, timezone),
             appt.organizationID,

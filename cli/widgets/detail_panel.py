@@ -1,6 +1,7 @@
 """Detail panel widget — shows appointment details with edit mode support."""
 from __future__ import annotations
 
+import asyncio
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
@@ -10,16 +11,71 @@ from typing import Any, Dict, List, Optional, Sequence
 from textual.app import ComposeResult
 from textual.containers import VerticalScroll
 from textual.message import Message
+from textual.suggester import Suggester, SuggestFromList
+from textual.binding import Binding
 from textual.widget import Widget
-from textual.widgets import Static
+from textual.widgets import Input, Static, TextArea
 
 from framework.appointment import Appointment, convert_reminder_to_minutes
+from framework.importer_token import ImporterToken
 from framework.utils import DEFAULT_DISPLAY_TZ, format_de_datetime, parse_de_datetime
 from cli.widgets.state import LabelReference
 
 logger = logging.getLogger(__name__)
 
 DAY_NAMES = {0: "Sun", 1: "Mon", 2: "Tue", 3: "Wed", 4: "Thu", 5: "Fri", 6: "Sat"}
+
+# Fields in the order they appear in read-only view (edit mode mirrors this).
+# Tuples: (field_id, label_text, placeholder)
+EDIT_FIELD_DEFS: list[tuple[str, str, str]] = [
+    ("name", "Name:", ""),
+    ("description", "Beschreibung:", ""),
+    ("startDate", "Start:", "TT.MM.JJJJ HH:MM"),
+    ("endDate", "Ende:", "TT.MM.JJJJ HH:MM"),
+    ("labels", "Labels (kommagetrennt):", "Label1, Label2"),
+    ("isPublic", "Öffentlich:", "Ja / Nein"),
+    ("reminder", "Erinnerung (Minuten):", "z.B. 120"),
+    ("notificationDate", "Benachrichtigung:", "TT.MM.JJJJ HH:MM"),
+]
+
+
+class EditInput(Input):
+    """Input subclass: Tab accepts the suggestion instead of moving focus."""
+
+    BINDINGS = [
+        *Input.BINDINGS,
+        Binding("tab", "accept_or_next", "Accept suggestion / next field", show=False),
+    ]
+
+    def action_accept_or_next(self) -> None:
+        if self.cursor_at_end and self._suggestion:
+            self.value = self._suggestion
+        else:
+            self.screen.focus_next()
+
+
+class LabelSuggester(Suggester):
+    """Suggest label completions for the last comma-separated token."""
+
+    def __init__(self, label_names: list[str]) -> None:
+        super().__init__(use_cache=False, case_sensitive=False)
+        self._names = sorted(label_names)
+
+    async def get_suggestion(self, value: str) -> str | None:
+        if "," in value:
+            prefix, _, current = value.rpartition(",")
+            leading = prefix + ", "
+            current = current.strip()
+        else:
+            leading = ""
+            current = value.strip()
+        if not current:
+            return None
+        current_lower = current.lower()
+        for name in self._names:
+            if name.lower().startswith(current_lower):
+                return leading + name
+        return None
 
 
 @dataclass
@@ -225,6 +281,37 @@ class DetailPanel(Widget):
     DetailPanel.is-active {
         border-left: solid $accent;
     }
+    DetailPanel .edit-section {
+        margin-top: 1;
+    }
+    DetailPanel .edit-label {
+        color: $text-muted;
+        padding: 0 1;
+    }
+    DetailPanel .edit-input {
+        width: 1fr;
+        margin: 0 1;
+    }
+    DetailPanel .edit-input.modified {
+        color: red;
+    }
+    DetailPanel .edit-textarea {
+        height: 6;
+        width: 1fr;
+        margin: 0 1;
+    }
+    DetailPanel .edit-textarea.modified {
+        color: red;
+    }
+    DetailPanel .edit-hint {
+        color: $text-muted;
+        margin-top: 1;
+        padding: 0 1;
+    }
+    DetailPanel .edit-warning {
+        color: $warning;
+        padding: 0 1;
+    }
     """
 
     class SaveRequested(Message):
@@ -250,6 +337,7 @@ class DetailPanel(Widget):
         self._focus_target_id: str = "#detail-scroll"
         self._form_state: Optional[EditFormState] = None
         self._label_directory: List[LabelReference] = []
+        self._import_token: Optional[str] = None  # GA-IMPORTER token stripped from description
 
     @property
     def edit_mode(self) -> bool:
@@ -320,10 +408,14 @@ class DetailPanel(Widget):
     def _render_read_only(self, appt: Appointment, label_service=None) -> None:
         """Render all fields as read-only static text with section spacing."""
         content = self.query_one("#detail-content", Static)
+        # Separate GA-IMPORTER token from description
+        clean_desc, token = ImporterToken.strip_from_text(appt.description)
+        self._import_token = token
+
         lines = [f"[b]{appt.name}[/b]"]
         lines.append(f"[dim]ID:[/dim] {appt.id}")
-        if appt.description:
-            lines.append(f"[dim]Beschreibung:[/dim] {appt.description}")
+        if clean_desc:
+            lines.append(f"[dim]Beschreibung:[/dim] {clean_desc}")
         else:
             lines.append("[dim]Beschreibung:[/dim] —")
 
@@ -365,14 +457,42 @@ class DetailPanel(Widget):
             lines.append(f"[dim]Wiederholung:[/dim] {_format_recurrence(appt.recurrence)}")
 
         lines.append("\n[dim]Press [b]e[/b] to edit[/dim]")
+
+        if self._import_token:
+            lines.append(f"\n[dim]{self._import_token}[/dim]")
+
         content.update("\n".join(lines))
 
     def set_label_directory(self, labels: List[LabelReference]) -> None:
         """Store the label directory for autocomplete and validation."""
         self._label_directory = list(labels)
 
+    def _resolve_ids_to_names(self, label_ids: list[int] | None) -> list[str]:
+        """Map label IDs to human-readable names using the directory."""
+        if not label_ids:
+            return []
+        lookup = {label.id: label.name for label in self._label_directory}
+        return [lookup.get(lid, str(lid)) for lid in label_ids]
+
+    def resolve_labels_from_names(self, names_text: str) -> tuple[list[int], list[str]]:
+        """Resolve comma-separated label names to IDs.
+
+        Returns (valid_ids, invalid_names).
+        """
+        names = [n.strip() for n in names_text.split(",") if n.strip()]
+        lookup = {label.name.lower(): label.id for label in self._label_directory}
+        valid_ids: list[int] = []
+        invalid_names: list[str] = []
+        for name in names:
+            lid = lookup.get(name.lower())
+            if lid is not None:
+                valid_ids.append(lid)
+            else:
+                invalid_names.append(name)
+        return valid_ids, invalid_names
+
     def enter_edit_mode(self) -> None:
-        """Switch to edit mode with editable field display."""
+        """Switch to edit mode with real Input widgets."""
         if not self._current_appointment and not self._create_mode:
             return
         self._edit_mode = True
@@ -380,13 +500,15 @@ class DetailPanel(Widget):
         self._modified_fields.clear()
 
         appt = self._current_appointment
-        self._original_values = self._get_field_values(appt) if appt else {}
         self._form_state = EditFormState.from_appointment(
             appt,
             label_directory=self._label_directory,
             display_timezone=self._display_tz,
         ) if appt else None
-        self._render_edit_form(appt)
+
+        # Build original values in human-readable format for the Inputs
+        self._original_values = self._get_edit_field_values(appt)
+        asyncio.create_task(self._mount_edit_ui())
 
     def enter_create_mode(self, defaults: dict) -> None:
         """Switch to create mode with empty/default fields."""
@@ -408,192 +530,249 @@ class DetailPanel(Widget):
             organizationID=defaults.get("organization_id", 0),
             timezone=defaults.get("timezone", "Europe/Berlin"),
         )
-        self._original_values = {}
         self._form_state = EditFormState.from_appointment(
             self._current_appointment,
             label_directory=self._label_directory,
             display_timezone=self._display_tz,
         )
-        self._render_edit_form(self._current_appointment)
+        self._original_values = self._get_edit_field_values(self._current_appointment)
+        asyncio.create_task(self._mount_edit_ui())
 
-    def _render_edit_form(self, appt: Optional[Appointment]) -> None:
-        """Render fields as an editable form display."""
-        content = self.query_one("#detail-content", Static)
+    def _get_edit_field_values(self, appt: Optional[Appointment]) -> dict[str, str]:
+        """Get field values in the format shown in edit Inputs (human-readable)."""
         if appt is None:
-            content.update("[dim]No appointment selected.[/dim]")
-            return
-
-        mode_label = "NEW APPOINTMENT" if self._create_mode else f"EDITING: {appt.name}"
-        lines = [f"[b]{mode_label}[/b]"]
-        if self._dirty:
-            lines[0] += " [yellow]*[/yellow]"
-        lines.append("")
-
+            return {fid: "" for fid, _, _ in EDIT_FIELD_DEFS}
         fs = self._form_state
-        if fs:
-            # Structured split-field rendering
-            self._render_field(lines, "name", appt.name or "")
-            self._render_field(lines, "description", appt.description or "")
-            lines.append("")
-            lines.append("[b]Zeitplan[/b]")
-            self._render_field(lines, "startDate", f"{fs.start_date} {fs.start_time}")
-            self._render_field(lines, "endDate", f"{fs.end_date} {fs.end_time}")
-            lines.append("")
-            lines.append("[b]Benachrichtigungen[/b]")
-            self._render_field(lines, "notificationDate", f"{fs.notification_date} {fs.notification_time}".strip())
-            lines.append("")
-            lines.append("[b]Erinnerung[/b]")
-            reminder_text = ""
-            if fs.reminder.value is not None:
-                reminder_text = f"{fs.reminder.value} {fs.reminder.unit}"
-                if fs.reminder.minutes_total is not None:
-                    reminder_text += f" ({fs.reminder.minutes_total} min)"
-            self._render_field(lines, "reminder", reminder_text)
-            if fs.reminder.warning:
-                lines.append(f"  [yellow]⚠ {fs.reminder.warning}[/yellow]")
-            lines.append("")
-            lines.append("[b]Labels[/b]")
-            label_text = ", ".join(fs.label_tokens) if fs.label_tokens else ""
-            self._render_field(lines, "labelIDs", label_text)
-            if fs.invalid_labels:
-                for inv in sorted(fs.invalid_labels):
-                    lines.append(f"  [yellow]⚠ Label '{inv}' existiert nicht[/yellow]")
-            lines.append("")
-            self._render_field(lines, "isPublic", "true" if appt.isPublic else "false")
-            self._render_field(lines, "timezone", appt.timezone or "UTC")
-            # Inline validation warnings
-            temporal_errors = fs.validate_temporal_ordering()
-            if temporal_errors:
-                lines.append("")
-                for err in temporal_errors:
-                    lines.append(f"[red]⚠ {err}[/red]")
-        else:
-            fields = self._get_field_values(appt)
-            for field_name, value in fields.items():
-                marker = " [yellow]*[/yellow]" if field_name in self._modified_fields else ""
-                lines.append(f"[dim]{field_name}:[/dim]{marker} {value}")
-
-        if appt.recurrence:
-            lines.append(f"\n[dim]Recurrence (read-only):[/dim] {_format_recurrence(appt.recurrence)}")
-        if appt.participants:
-            lines.append(f"[dim]Participants (read-only):[/dim] {len(appt.participants)}")
-
-        lines.append("\n[dim]Press [b]Ctrl+S[/b] to save, [b]Esc[/b] to cancel[/dim]")
-        if self._dirty:
-            lines.append("[yellow]Unsaved changes[/yellow]")
-
-        content.update("\n".join(lines))
-
-    def _render_field(self, lines: List[str], field_name: str, value: str) -> None:
-        marker = " [yellow]*[/yellow]" if field_name in self._modified_fields else ""
-        lines.append(f"[dim]{field_name}:[/dim]{marker} {value}")
-
-    def _get_field_values(self, appt: Optional[Appointment]) -> Dict[str, str]:
-        """Extract editable field values from an appointment."""
-        if appt is None:
-            return {}
+        label_names = self._resolve_ids_to_names(appt.labelIDs)
+        # Strip GA-IMPORTER token from description for editing
+        clean_desc, token = ImporterToken.strip_from_text(appt.description)
+        self._import_token = token
         return {
             "name": appt.name or "",
-            "description": appt.description or "",
-            "startDate": self._fmt_dt(appt.startDate),
-            "endDate": self._fmt_dt(appt.endDate),
-            "labelIDs": ",".join(str(lid) for lid in appt.labelIDs) if appt.labelIDs else "",
-            "isPublic": "true" if appt.isPublic else "false",
+            "description": clean_desc,
+            "startDate": f"{fs.start_date} {fs.start_time}".strip() if fs else self._fmt_dt(appt.startDate),
+            "endDate": f"{fs.end_date} {fs.end_time}".strip() if fs else self._fmt_dt(appt.endDate),
+            "labels": ", ".join(label_names),
+            "isPublic": "Ja" if appt.isPublic else "Nein",
             "reminder": str(appt.reminder) if appt.reminder is not None else "",
-            "notificationDate": self._fmt_dt(appt.notificationDate),
-            "feedbackDeadline": self._fmt_dt(appt.feedbackDeadline),
-            "timezone": appt.timezone or "UTC",
+            "notificationDate": (
+                f"{fs.notification_date} {fs.notification_time}".strip()
+                if fs else self._fmt_dt(appt.notificationDate)
+            ),
         }
 
-    def update_field(self, field_name: str, value: str) -> None:
-        """Update a field value and mark as modified."""
-        if not self._current_appointment:
+    async def _mount_edit_ui(self) -> None:
+        """Replace the Static content with editable Input widgets."""
+        try:
+            scroll = self.query_one("#detail-scroll", VerticalScroll)
+        except Exception:
             return
+        await scroll.remove_children()
 
-        old_val = self._original_values.get(field_name, "")
-        if value != old_val:
+        appt = self._current_appointment
+        mode_label = "NEUER TERMIN" if self._create_mode else f"BEARBEITEN: {appt.name if appt else ''}"
+        widgets: list[Static | Input] = [Static(f"[b]{mode_label}[/b]", id="edit-header")]
+
+        label_names = [ref.name for ref in self._label_directory]
+        label_suggester = LabelSuggester(label_names) if label_names else None
+        values = self._original_values
+
+        for field_id, label_text, placeholder in EDIT_FIELD_DEFS:
+            # Section headers before certain groups
+            if field_id == "startDate":
+                widgets.append(Static("[b]Zeitplan[/b]", classes="edit-section"))
+            elif field_id == "labels":
+                widgets.append(Static("[b]Labels[/b]", classes="edit-section"))
+            elif field_id == "reminder":
+                widgets.append(Static("[b]Benachrichtigungen[/b]", classes="edit-section"))
+
+            widgets.append(Static(label_text, classes="edit-label"))
+            if field_id == "description":
+                ta = TextArea(
+                    text=values.get(field_id, ""),
+                    id=f"edit-{field_id}",
+                    classes="edit-textarea",
+                    tab_behavior="focus",
+                    show_line_numbers=False,
+                    theme="css",
+                    soft_wrap=True,
+                )
+                widgets.append(ta)
+            else:
+                inp = EditInput(
+                    value=values.get(field_id, ""),
+                    placeholder=placeholder,
+                    id=f"edit-{field_id}",
+                    classes="edit-input",
+                )
+                if field_id == "labels" and label_suggester:
+                    inp.suggester = label_suggester
+                widgets.append(inp)
+
+        # Read-only fields
+        if appt and appt.recurrence:
+            widgets.append(Static(
+                f"\n[dim]Wiederholung (nur lesen):[/dim] {_format_recurrence(appt.recurrence)}",
+                classes="edit-hint",
+            ))
+        if appt and appt.participants:
+            widgets.append(Static(
+                f"[dim]Teilnehmer (nur lesen):[/dim] {len(appt.participants)}",
+                classes="edit-hint",
+            ))
+
+        widgets.append(Static("\n[dim]Ctrl+S speichern, Esc abbrechen[/dim]", classes="edit-hint"))
+
+        await scroll.mount(*widgets)
+
+        # Focus the first Input so user can start typing immediately
+        try:
+            first_input = self.query_one("#edit-name", EditInput)
+            first_input.focus()
+        except Exception:
+            pass
+
+    def _render_edit_form(self, appt: Optional[Appointment]) -> None:
+        """Update the edit header to reflect dirty state (Inputs stay live)."""
+        try:
+            header = self.query_one("#edit-header", Static)
+        except Exception:
+            return
+        mode_label = "NEUER TERMIN" if self._create_mode else f"BEARBEITEN: {appt.name if appt else ''}"
+        if self._dirty:
+            mode_label += " [yellow]*[/yellow]"
+        header.update(f"[b]{mode_label}[/b]")
+
+    def on_input_changed(self, event: Input.Changed) -> None:
+        """Track modified fields and toggle red color on changed Inputs."""
+        if not self._edit_mode:
+            return
+        input_id = event.input.id
+        if not input_id or not input_id.startswith("edit-"):
+            return
+        field_name = input_id[5:]  # strip "edit-" prefix
+        original = self._original_values.get(field_name, "")
+        if event.value != original:
             self._modified_fields.add(field_name)
-            self._dirty = True
+            event.input.add_class("modified")
         else:
             self._modified_fields.discard(field_name)
-            self._dirty = bool(self._modified_fields)
-
-        self._apply_field_to_appointment(field_name, value)
-
-        # Keep EditFormState in sync with field edits
-        if self._form_state:
-            self._sync_form_state_field(field_name, value)
-
+            event.input.remove_class("modified")
+        self._dirty = bool(self._modified_fields)
         self._render_edit_form(self._current_appointment)
 
-    def _sync_form_state_field(self, field_name: str, value: str) -> None:
-        """Propagate a raw field edit into EditFormState."""
-        fs = self._form_state
-        if fs is None:
+    def on_text_area_changed(self, event: TextArea.Changed) -> None:
+        """Track modified state for the description TextArea."""
+        if not self._edit_mode:
             return
-        if field_name == "startDate":
-            parts = value.strip().split(" ", 1)
-            fs.start_date = parts[0] if parts else ""
-            fs.start_time = parts[1] if len(parts) > 1 else ""
-        elif field_name == "endDate":
-            parts = value.strip().split(" ", 1)
-            fs.end_date = parts[0] if parts else ""
-            fs.end_time = parts[1] if len(parts) > 1 else ""
-        elif field_name == "notificationDate":
-            parts = value.strip().split(" ", 1)
-            fs.notification_date = parts[0] if parts else ""
-            fs.notification_time = parts[1] if len(parts) > 1 else ""
-        elif field_name == "reminder":
-            fs.apply_reminder(value, fs.reminder.unit)
-        elif field_name == "labelIDs":
-            tokens = [t.strip() for t in value.split(",") if t.strip()]
-            fs.apply_label_tokens(tokens)
+        ta = event.text_area
+        ta_id = ta.id
+        if not ta_id or not ta_id.startswith("edit-"):
+            return
+        field_name = ta_id[5:]
+        original = self._original_values.get(field_name, "")
+        if ta.text != original:
+            self._modified_fields.add(field_name)
+            ta.add_class("modified")
+        else:
+            self._modified_fields.discard(field_name)
+            ta.remove_class("modified")
+        self._dirty = bool(self._modified_fields)
+        self._render_edit_form(self._current_appointment)
 
-    def _apply_field_to_appointment(self, field_name: str, value: str) -> None:
-        """Apply a field value to the current appointment object."""
+    def _read_input_values(self) -> dict[str, str]:
+        """Read current values from all edit widgets (Input + TextArea)."""
+        values: dict[str, str] = {}
+        for field_id, _, _ in EDIT_FIELD_DEFS:
+            if field_id == "description":
+                try:
+                    ta = self.query_one(f"#edit-{field_id}", TextArea)
+                    values[field_id] = ta.text
+                except Exception:
+                    values[field_id] = self._original_values.get(field_id, "")
+            else:
+                try:
+                    inp = self.query_one(f"#edit-{field_id}", Input)
+                    values[field_id] = inp.value
+                except Exception:
+                    values[field_id] = self._original_values.get(field_id, "")
+        return values
+
+    def _sync_inputs_to_appointment(self) -> None:
+        """Sync all Input widget values to the appointment object and form state."""
         appt = self._current_appointment
         if appt is None:
             return
+        values = self._read_input_values()
+        fs = self._form_state
 
-        from dateutil import parser as dt_parser
-        try:
-            if field_name == "name":
-                appt.name = value
-            elif field_name == "description":
-                appt.description = value
-            elif field_name == "startDate" and value:
-                appt.startDate = dt_parser.parse(value)
-            elif field_name == "endDate" and value:
-                appt.endDate = dt_parser.parse(value)
-            elif field_name == "labelIDs":
-                if value.strip():
-                    appt.labelIDs = [int(x.strip()) for x in value.split(",") if x.strip()]
-                else:
-                    appt.labelIDs = []
-            elif field_name == "isPublic":
-                appt.isPublic = value.lower() in ("true", "yes", "1")
-            elif field_name == "reminder":
-                appt.reminder = int(value) if value.strip() else None
-            elif field_name == "notificationDate" and value.strip():
-                appt.notificationDate = dt_parser.parse(value)
-            elif field_name == "notificationDate":
+        # Name / description (re-append GA-IMPORTER token if present)
+        appt.name = values.get("name", "") or ""
+        desc = values.get("description", "") or ""
+        if self._import_token:
+            appt.description = f"{desc}\n{self._import_token}" if desc else self._import_token
+        else:
+            appt.description = desc
+
+        # Dates — parse German format back to datetime
+        for date_field in ("startDate", "endDate", "notificationDate"):
+            raw = values.get(date_field, "").strip()
+            parts = raw.split(" ", 1)
+            date_part = parts[0] if parts else ""
+            time_part = parts[1] if len(parts) > 1 else ""
+            if fs:
+                if date_field == "startDate":
+                    fs.start_date, fs.start_time = date_part, time_part
+                elif date_field == "endDate":
+                    fs.end_date, fs.end_time = date_part, time_part
+                elif date_field == "notificationDate":
+                    fs.notification_date, fs.notification_time = date_part, time_part
+            if date_part:
+                try:
+                    dt = parse_de_datetime(date_part, time_part or "00:00", tz_name=self._display_tz)
+                    setattr(appt, date_field, dt)
+                except Exception:
+                    pass  # validation will catch this
+            elif date_field == "notificationDate":
                 appt.notificationDate = None
-            elif field_name == "feedbackDeadline" and value.strip():
-                appt.feedbackDeadline = dt_parser.parse(value)
-            elif field_name == "feedbackDeadline":
-                appt.feedbackDeadline = None
-            elif field_name == "timezone":
-                appt.timezone = value
-        except (ValueError, TypeError) as exc:
-            logger.debug("Invalid field value %s=%r: %s", field_name, value, exc)
+
+        # Labels — resolve names to IDs
+        labels_text = values.get("labels", "")
+        valid_ids, invalid_names = self.resolve_labels_from_names(labels_text)
+        appt.labelIDs = valid_ids
+        if fs:
+            tokens = [n.strip() for n in labels_text.split(",") if n.strip()]
+            fs.label_tokens = tokens
+            fs.invalid_labels = set(invalid_names)
+
+        # isPublic
+        public_val = values.get("isPublic", "").strip().lower()
+        appt.isPublic = public_val in ("ja", "true", "yes", "1")
+
+        # Reminder
+        reminder_text = values.get("reminder", "").strip()
+        if reminder_text:
+            try:
+                appt.reminder = int(reminder_text)
+                if fs:
+                    fs.apply_reminder(reminder_text, "minutes")
+            except ValueError:
+                appt.reminder = None
+                if fs:
+                    fs.apply_reminder(reminder_text, "minutes")
+        else:
+            appt.reminder = None
+            if fs:
+                fs.apply_reminder(None)
 
     def get_changes(self) -> tuple[dict, dict]:
         """Return (old_values, new_values) dicts for changed fields only."""
         if not self._current_appointment:
             return {}, {}
-        current = self._get_field_values(self._current_appointment)
-        old = {}
-        new = {}
+        self._sync_inputs_to_appointment()
+        current = self._read_input_values()
+        old: dict[str, str] = {}
+        new: dict[str, str] = {}
         for field_name in self._modified_fields:
             old[field_name] = self._original_values.get(field_name, "")
             new[field_name] = current.get(field_name, "")
@@ -601,7 +780,8 @@ class DetailPanel(Widget):
 
     def validate_fields(self) -> list[str]:
         """Validate the current appointment fields. Returns a list of error messages."""
-        errors = []
+        self._sync_inputs_to_appointment()
+        errors: list[str] = []
         appt = self._current_appointment
         if appt is None:
             return ["No appointment loaded"]
@@ -614,7 +794,6 @@ class DetailPanel(Widget):
         if isinstance(appt.startDate, datetime) and isinstance(appt.endDate, datetime):
             if appt.endDate <= appt.startDate:
                 errors.append("End date must be after start date")
-        # EditFormState-powered validations
         if self._form_state:
             temporal = self._form_state.validate_temporal_ordering()
             errors.extend(temporal)
@@ -626,31 +805,52 @@ class DetailPanel(Widget):
         """Return label warning messages for the confirmation dialog."""
         if not self._form_state or not self._form_state.invalid_labels:
             return []
-        return [f"Label '{name}' existiert nicht" for name in sorted(self._form_state.invalid_labels)]
+        return [f"Label '{name}' existiert nicht und wird ignoriert"
+                for name in sorted(self._form_state.invalid_labels)]
 
     def discard_changes(self) -> None:
-        """Revert all fields to original values."""
+        """Revert all fields to original values and restore read-only view."""
+        # Restore original appointment state
         if self._current_appointment and self._original_values:
-            for field_name, value in self._original_values.items():
-                self._apply_field_to_appointment(field_name, value)
+            appt = self._current_appointment
+            appt.name = self._original_values.get("name", appt.name)
+            appt.description = self._original_values.get("description", appt.description)
+            # Restore label IDs from original names
+            orig_labels = self._original_values.get("labels", "")
+            if orig_labels:
+                valid_ids, _ = self.resolve_labels_from_names(orig_labels)
+                appt.labelIDs = valid_ids
+            else:
+                appt.labelIDs = []
+            public_val = self._original_values.get("isPublic", "").strip().lower()
+            appt.isPublic = public_val in ("ja", "true", "yes", "1")
+            reminder_text = self._original_values.get("reminder", "").strip()
+            appt.reminder = int(reminder_text) if reminder_text else None
+        was_create = self._create_mode
         self._edit_mode = False
         self._create_mode = False
         self._dirty = False
         self._modified_fields.clear()
         self._form_state = None
-        if self._current_appointment:
-            self._render_read_only(self._current_appointment, self._label_service)
-        else:
-            self.show_help()
+        # Restore the Static content into the scroll container
+        asyncio.create_task(self._restore_read_only_ui(was_create))
 
-    def show_help(self) -> None:
-        """Display help text when no appointment is selected."""
-        self._current_appointment = None
-        self._edit_mode = False
-        self._create_mode = False
-        self._dirty = False
-        self._modified_fields.clear()
-        content = self.query_one("#detail-content", Static)
+    async def _restore_read_only_ui(self, was_create: bool = False) -> None:
+        """Remove edit Inputs and restore the Static content widget."""
+        try:
+            scroll = self.query_one("#detail-scroll", VerticalScroll)
+        except Exception:
+            return
+        await scroll.remove_children()
+        content = Static("", id="detail-content", classes="help-text")
+        await scroll.mount(content)
+        if was_create or not self._current_appointment:
+            self._show_help_content(content)
+        else:
+            self._render_read_only(self._current_appointment, self._label_service)
+
+    def _show_help_content(self, content: Static) -> None:
+        """Write help text into the given Static widget."""
         content.update(
             "[b]GroupAlarm TUI[/b]\n\n"
             "Select an appointment from the list to view details.\n\n"
@@ -669,6 +869,20 @@ class DetailPanel(Widget):
             "  [b]Ctrl +/−[/b] Zoom in/out (terminal)\n"
             "  [b]q[/b]       Quit"
         )
+
+    def show_help(self) -> None:
+        """Display help text when no appointment is selected."""
+        self._current_appointment = None
+        self._edit_mode = False
+        self._create_mode = False
+        self._dirty = False
+        self._modified_fields.clear()
+        try:
+            content = self.query_one("#detail-content", Static)
+            self._show_help_content(content)
+        except Exception:
+            # Content may not exist yet if still in edit UI; schedule restore
+            asyncio.create_task(self._restore_read_only_ui(was_create=True))
 
     def set_focus_state(self, focused: bool) -> None:
         if focused == self._focused:

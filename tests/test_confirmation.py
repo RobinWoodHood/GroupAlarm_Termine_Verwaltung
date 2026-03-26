@@ -250,13 +250,16 @@ async def test_save_waits_for_confirmation_before_update():
             labelIDs=[1],
             timezone="UTC",
         )
-        detail._current_appointment = appt
-        detail._original_values = detail._get_field_values(appt)
-        appt.name = "Training Beta"
-        detail._modified_fields = {"name"}
-        detail._dirty = True
-        detail._edit_mode = True
-        detail._create_mode = False
+        detail.show_appointment(appt)
+        await pilot.pause()
+        detail.enter_edit_mode()
+        await pilot.pause()
+
+        # Modify the name Input widget
+        from textual.widgets import Input
+        name_input = detail.query_one("#edit-name", Input)
+        name_input.value = "Training Beta"
+        await pilot.pause()
 
         main_screen._appt_service.update = MagicMock()
 

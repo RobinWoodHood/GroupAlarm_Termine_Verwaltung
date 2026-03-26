@@ -363,6 +363,9 @@ class MainScreen(Screen):
         detail = self.query_one("#detail-panel", DetailPanel)
         if detail.current_appointment and not detail.edit_mode:
             detail.enter_edit_mode()
+            # Activate detail panel so up/down navigates between inputs
+            self.navigation_state.set_active_panel("detail", "#detail-panel")
+            self._update_panel_focus_states("detail")
 
     def action_save(self) -> None:
         if self._loading:
