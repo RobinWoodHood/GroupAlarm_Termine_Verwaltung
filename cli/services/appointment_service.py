@@ -178,3 +178,31 @@ class AppointmentService:
         """Delete an appointment via the client."""
         self._client.delete_appointment(appt_id, strategy=strategy, time_=time_)
         logger.info("Deleted appointment %s (strategy=%s)", appt_id, strategy)
+
+    def add_missing_tokens(self) -> tuple[int, int, list[str]]:
+        """Add GA-IMPORTER tokens to all filtered appointments that lack one.
+
+        Each modified appointment is immediately pushed to the API.
+
+        Returns
+        -------
+        tuple[int, int, list[str]]
+            ``(updated_count, skipped_count, errors)``
+        """
+        from framework.importer_token import ImporterToken
+
+        updated = 0
+        skipped = 0
+        errors: list[str] = []
+        for appt in self._filtered:
+            if ImporterToken.find_in_text(appt.description):
+                skipped += 1
+                continue
+            ImporterToken.ensure_token(appt)
+            try:
+                self._client.update_appointment(appt)
+                updated += 1
+            except Exception as exc:
+                errors.append(f"{appt.name} (ID {appt.id}): {exc}")
+                logger.error("Failed to add token to %s: %s", appt.id, exc)
+        return updated, skipped, errors

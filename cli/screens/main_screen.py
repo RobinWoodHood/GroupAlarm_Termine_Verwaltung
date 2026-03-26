@@ -631,6 +631,61 @@ class MainScreen(Screen):
 
     # --- Navigation & Filter ---
 
+    def action_add_importer_tokens(self) -> None:
+        """Add GA-IMPORTER tokens to all filtered appointments that don't have one."""
+        if self._loading:
+            return
+        detail = self.query_one("#detail-panel", DetailPanel)
+        if detail.edit_mode:
+            return
+
+        from framework.importer_token import ImporterToken
+        appointments = self._appt_service.appointments
+        if not appointments:
+            self.app.notify("No appointments in current view.", severity="warning")
+            return
+
+        missing = [a for a in appointments if not ImporterToken.find_in_text(a.description)]
+        if not missing:
+            self.app.notify("All appointments already have a GA-IMPORTER token.", severity="information")
+            return
+
+        body = (
+            f"[b]{len(missing)}[/b] of {len(appointments)} filtered appointments "
+            f"have no GA-IMPORTER token.\n\n"
+            "A unique token will be added to each description and "
+            "uploaded to GroupAlarm.\n\n"
+            "[dim]Appointments with existing tokens are skipped.[/dim]"
+        )
+        dialog = ConfirmationDialog(
+            title="Add Importer Tokens",
+            body=body,
+            confirm_label="Add Tokens",
+            confirm_key="a",
+        )
+        self.app.push_screen(dialog, self._on_add_tokens_confirmed)
+
+    def _on_add_tokens_confirmed(self, confirmed: bool) -> None:
+        if not confirmed:
+            return
+        self._lock_ui()
+        try:
+            updated, skipped, errors = self._appt_service.add_missing_tokens()
+            parts = [f"Tokens added: {updated}"]
+            if skipped:
+                parts.append(f"already had token: {skipped}")
+            if errors:
+                parts.append(f"errors: {len(errors)}")
+                for err in errors[:3]:
+                    self.app.notify(err, severity="error")
+            self.app.notify("  ·  ".join(parts), severity="information")
+            self._load_appointments()
+        except Exception as exc:
+            logger.error("Add tokens failed: %s", exc)
+            self.app.notify(f"Add tokens failed: {exc}", severity="error")
+        finally:
+            self._unlock_ui()
+
     def action_search(self) -> None:
         filter_bar = self.query_one("#filter-bar", FilterBar)
         self.navigation_state.set_active_panel("filter", "#search-input")

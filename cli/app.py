@@ -29,6 +29,7 @@ class GroupAlarmApp(App):
         Binding("n", "new_appointment", "New", show=True),
         Binding("d", "delete_appointment", "Delete", show=True),
         Binding("x", "export", "Export", show=True),
+        Binding("i", "add_importer_tokens", "Add Tokens", show=True),
         Binding("f1", "help", "Help", show=True),
         Binding("r", "refresh", "Refresh", show=True),
     ]
@@ -112,6 +113,11 @@ class GroupAlarmApp(App):
         screen = self.screen
         if hasattr(screen, "action_export"):
             screen.action_export()
+
+    def action_add_importer_tokens(self) -> None:
+        screen = self.screen
+        if hasattr(screen, "action_add_importer_tokens"):
+            screen.action_add_importer_tokens()
 
     def action_help(self) -> None:
         from cli.screens.help_screen import HelpScreen

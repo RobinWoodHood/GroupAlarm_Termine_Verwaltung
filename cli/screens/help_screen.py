@@ -54,6 +54,7 @@ class HelpScreen(ModalScreen[None]):
                 "  n           Create new appointment\n"
                 "  d           Delete selected appointment\n"
                 "  x           Export filtered list to Excel\n"
+                "  i           Add GA-IMPORTER tokens to filtered\n"
                 "  r           Refresh appointment list\n"
                 "\n"
                 "[b]General[/b]\n"

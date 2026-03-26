@@ -75,6 +75,32 @@ class ImporterToken:
         return (clean, token)
 
     @staticmethod
+    def ensure_token(appointment) -> bool:
+        """Add a GA-IMPORTER token to the appointment if it has none.
+
+        Modifies ``appointment.description`` in-place.
+
+        Parameters
+        ----------
+        appointment
+            An object with a ``.description`` attribute.
+
+        Returns
+        -------
+        bool
+            ``True`` if a new token was added, ``False`` if one already existed.
+        """
+        existing = ImporterToken.find_in_text(appointment.description)
+        if existing:
+            return False
+        token = ImporterToken.create_token()
+        if appointment.description:
+            appointment.description = f"{appointment.description}\n{token}"
+        else:
+            appointment.description = token
+        return True
+
+    @staticmethod
     def validate_token(token: str) -> bool:
         """Validate token checksum.
 
