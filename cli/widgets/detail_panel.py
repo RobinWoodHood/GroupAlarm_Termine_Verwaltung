@@ -33,25 +33,91 @@ EDIT_FIELD_DEFS: list[tuple[str, str, str]] = [
     ("startDate", "Start:", "TT.MM.JJJJ HH:MM"),
     ("endDate", "Ende:", "TT.MM.JJJJ HH:MM"),
     ("labels", "Labels (kommagetrennt):", "Label1, Label2"),
+    ("participants", "Teilnehmer:", "Name1, Name2"),
     ("isPublic", "Öffentlich:", "Ja / Nein"),
+    ("keepLabelParticipantsInSync", "Label-Sync:", "Ja / Nein"),
     ("reminder", "Erinnerung (Minuten):", "z.B. 120"),
     ("notificationDate", "Benachrichtigung:", "TT.MM.JJJJ HH:MM"),
 ]
 
 
 class EditInput(Input):
-    """Input subclass: Tab accepts the suggestion instead of moving focus."""
+    """Input subclass: Tab accepts the suggestion instead of moving focus.
+
+    Up/Down navigate between form fields.
+    """
 
     BINDINGS = [
         *Input.BINDINGS,
         Binding("tab", "accept_or_next", "Accept suggestion / next field", show=False),
+        Binding("up", "focus_prev_field", "Previous field", show=False),
+        Binding("down", "focus_next_field", "Next field", show=False),
     ]
 
     def action_accept_or_next(self) -> None:
         if self.cursor_at_end and self._suggestion:
             self.value = self._suggestion
+            self.cursor_position = len(self.value)
         else:
             self.screen.focus_next()
+
+    def action_focus_prev_field(self) -> None:
+        focusable = self._edit_focusable()
+        if focusable and focusable[0] is not self:
+            self.screen.focus_previous()
+
+    def action_focus_next_field(self) -> None:
+        focusable = self._edit_focusable()
+        if focusable and focusable[-1] is not self:
+            self.screen.focus_next()
+
+    def _edit_focusable(self) -> list:
+        """Return ordered list of focusable edit widgets in the form."""
+        try:
+            scroll = self.screen.query_one("#detail-scroll", VerticalScroll)
+            return list(scroll.query("EditInput, BoundaryTextArea"))
+        except Exception:
+            return []
+
+
+class BoundaryTextArea(TextArea):
+    """TextArea that moves focus to adjacent fields at cursor boundaries.
+
+    - Up on the first line → focus previous field
+    - Down on the last line → focus next field
+    """
+
+    BINDINGS = [
+        *TextArea.BINDINGS,
+        Binding("up", "cursor_up_or_prev", "Up", show=False),
+        Binding("down", "cursor_down_or_next", "Down", show=False),
+    ]
+
+    def action_cursor_up_or_prev(self) -> None:
+        row, _col = self.cursor_location
+        if row == 0:
+            focusable = self._edit_focusable()
+            if focusable and focusable[0] is not self:
+                self.screen.focus_previous()
+        else:
+            self.action_cursor_up()
+
+    def action_cursor_down_or_next(self) -> None:
+        row, _col = self.cursor_location
+        if row >= self.document.line_count - 1:
+            focusable = self._edit_focusable()
+            if focusable and focusable[-1] is not self:
+                self.screen.focus_next()
+        else:
+            self.action_cursor_down()
+
+    def _edit_focusable(self) -> list:
+        """Return ordered list of focusable edit widgets in the form."""
+        try:
+            scroll = self.screen.query_one("#detail-scroll", VerticalScroll)
+            return list(scroll.query("EditInput, BoundaryTextArea"))
+        except Exception:
+            return []
 
 
 class LabelSuggester(Suggester):
@@ -60,6 +126,30 @@ class LabelSuggester(Suggester):
     def __init__(self, label_names: list[str]) -> None:
         super().__init__(use_cache=False, case_sensitive=False)
         self._names = sorted(label_names)
+
+    async def get_suggestion(self, value: str) -> str | None:
+        if "," in value:
+            prefix, _, current = value.rpartition(",")
+            leading = prefix + ", "
+            current = current.strip()
+        else:
+            leading = ""
+            current = value.strip()
+        if not current:
+            return None
+        current_lower = current.lower()
+        for name in self._names:
+            if name.lower().startswith(current_lower):
+                return leading + name
+        return None
+
+
+class UserSuggester(Suggester):
+    """Suggest user names for the last comma-separated token."""
+
+    def __init__(self, display_names: list[str]) -> None:
+        super().__init__(use_cache=False, case_sensitive=False)
+        self._names = sorted(display_names)
 
     async def get_suggestion(self, value: str) -> str | None:
         if "," in value:
@@ -259,7 +349,7 @@ class DetailPanel(Widget):
         color: $text-muted;
     }
     DetailPanel .field-label {
-        color: $text-muted;
+        color: $accent;
         margin-top: 1;
     }
     DetailPanel .field-modified {
@@ -285,7 +375,7 @@ class DetailPanel(Widget):
         margin-top: 1;
     }
     DetailPanel .edit-label {
-        color: $text-muted;
+        color: $accent;
         padding: 0 1;
     }
     DetailPanel .edit-input {
@@ -326,6 +416,7 @@ class DetailPanel(Widget):
         super().__init__(**kwargs)
         self._current_appointment: Optional[Appointment] = None
         self._label_service = None
+        self._user_service = None
         self._edit_mode: bool = False
         self._create_mode: bool = False
         self._dirty: bool = False
@@ -407,12 +498,15 @@ class DetailPanel(Widget):
         return result.text
 
     def _render_read_only(self, appt: Appointment, label_service=None) -> None:
-        """Render all fields as read-only static text with section spacing."""
-        content = self.query_one("#detail-content", Static)
+        """Render all fields as read-only with .field-label CSS styling."""
         # Separate GA-IMPORTER token from description
         clean_desc, token = ImporterToken.strip_from_text(appt.description)
         self._import_token = token
 
+        # Build Rich markup for the single content Static.
+        # Use [bold] style for field labels — the CSS .field-label class
+        # with $accent color is applied in the edit-mode mounted widgets.
+        # Read-only mode keeps the single-Static approach for speed.
         lines = [f"[b]{appt.name}[/b]"]
         lines.append(f"[dim]ID:[/dim] {appt.id}")
         if clean_desc:
@@ -437,6 +531,7 @@ class DetailPanel(Widget):
             lines.append("  [dim]—[/dim]")
 
         lines.append(f"  [dim]Öffentlich:[/dim] {'Ja' if appt.isPublic else 'Nein'}")
+        lines.append(f"  [dim]Label-Sync:[/dim] {'Ja' if appt.keepLabelParticipantsInSync else 'Nein'}")
 
         has_notification_section = appt.reminder is not None or appt.notificationDate or appt.feedbackDeadline
         if has_notification_section:
@@ -449,24 +544,83 @@ class DetailPanel(Widget):
             if appt.feedbackDeadline:
                 lines.append(f"  [dim]Rückmeldefrist:[/dim] {self._fmt_dt(appt.feedbackDeadline)}")
 
-        if appt.participants:
-            lines.append("")
-            lines.append(f"[dim]Teilnehmer:[/dim] {len(appt.participants)}")
-
         if appt.recurrence:
             lines.append("")
             lines.append(f"[dim]Wiederholung:[/dim] {_format_recurrence(appt.recurrence)}")
+
+        # Direct participants (labelID == 0 or None)
+        if appt.participants:
+            direct = [p for p in appt.participants if not p.get("labelID")]
+            if direct:
+                lines.append("")
+                lines.append(f"[b]Direkte Teilnehmer[/b] ({len(direct)})")
+                for p in direct:
+                    name = self._resolve_participant_name(p.get("userID"))
+                    lines.append(f"  {name}")
+
+            # Feedback lists
+            lines.extend(self._build_feedback_lines(appt.participants))
 
         lines.append("\n[dim]Press [b]e[/b] to edit[/dim]")
 
         if self._import_token:
             lines.append(f"\n[dim]{self._import_token}[/dim]")
 
+        try:
+            content = self.query_one("#detail-content", Static)
+        except Exception:
+            # Widget doesn't exist yet (edit UI still mounted); schedule async re-mount
+            asyncio.create_task(self._ensure_read_only_content())
+            return
         content.update("\n".join(lines))
+
+    def _resolve_participant_name(self, user_id: int | None) -> str:
+        """Resolve a user ID to a display name via UserService."""
+        if user_id is None:
+            return "Unbekannt"
+        if self._user_service:
+            return self._user_service.get_display_name(user_id)
+        return f"User #{user_id}"
+
+    def _build_feedback_lines(self, participants: list[dict]) -> list[str]:
+        """Build feedback sub-lists grouped by status.
+
+        Feedback status: 1=Zugesagt, 2=Abgesagt, 0/None=Keine Rückmeldung
+        """
+        FEEDBACK_LABELS = {1: "Zugesagt", 2: "Abgesagt", 0: "Keine Rückmeldung"}
+        groups: dict[int, list[dict]] = {0: [], 1: [], 2: []}
+        for p in participants:
+            status = p.get("feedback", 0) or 0
+            groups.setdefault(status, []).append(p)
+
+        lines: list[str] = []
+        # Show user cache warning if UserService is empty
+        if self._user_service and not self._user_service.get_directory():
+            lines.append("")
+            lines.append("[dim italic]⚠ Benutzerdaten nicht verfügbar — IDs werden angezeigt[/dim italic]")
+
+        for status_key in (1, 2, 0):
+            group = groups.get(status_key, [])
+            if not group:
+                continue
+            label = FEEDBACK_LABELS.get(status_key, "Unbekannt")
+            lines.append("")
+            lines.append(f"[b]{label}[/b] ({len(group)})")
+            for p in group:
+                name = self._resolve_participant_name(p.get("userID"))
+                lines.append(f"  {name}")
+                msg = p.get("feedbackMessage", "")
+                if msg:
+                    lines.append(f"    [dim]\"{msg}\"[/dim]")
+        return lines
 
     def set_label_directory(self, labels: List[LabelReference]) -> None:
         """Store the label directory for autocomplete and validation."""
         self._label_directory = list(labels)
+
+    def set_user_service(self, user_service) -> None:
+        """Store a reference to the UserService for participant name resolution."""
+        self._user_service = user_service
 
     def _resolve_ids_to_names(self, label_ids: list[int] | None) -> list[str]:
         """Map label IDs to human-readable names using the directory."""
@@ -530,6 +684,8 @@ class DetailPanel(Widget):
             endDate=end,
             organizationID=defaults.get("organization_id", 0),
             timezone=defaults.get("timezone", "Europe/Berlin"),
+            isPublic=False,
+            keepLabelParticipantsInSync=True,
         )
         self._form_state = EditFormState.from_appointment(
             self._current_appointment,
@@ -548,13 +704,23 @@ class DetailPanel(Widget):
         # Strip GA-IMPORTER token from description for editing
         clean_desc, token = ImporterToken.strip_from_text(appt.description)
         self._import_token = token
+        # Resolve participant display names
+        participant_names = ""
+        if appt.participants:
+            direct = [p for p in appt.participants if not p.get("labelID")]
+            if direct:
+                participant_names = ", ".join(
+                    self._resolve_participant_name(p.get("userID")) for p in direct
+                )
         return {
             "name": appt.name or "",
             "description": clean_desc,
             "startDate": f"{fs.start_date} {fs.start_time}".strip() if fs else self._fmt_dt(appt.startDate),
             "endDate": f"{fs.end_date} {fs.end_time}".strip() if fs else self._fmt_dt(appt.endDate),
             "labels": ", ".join(label_names),
+            "participants": participant_names,
             "isPublic": "Ja" if appt.isPublic else "Nein",
+            "keepLabelParticipantsInSync": "Ja" if appt.keepLabelParticipantsInSync else "Nein",
             "reminder": str(appt.reminder) if appt.reminder is not None else "",
             "notificationDate": (
                 f"{fs.notification_date} {fs.notification_time}".strip()
@@ -572,10 +738,15 @@ class DetailPanel(Widget):
 
         appt = self._current_appointment
         mode_label = "NEUER TERMIN" if self._create_mode else f"BEARBEITEN: {appt.name if appt else ''}"
-        widgets: list[Static | Input] = [Static(f"[b]{mode_label}[/b]", id="edit-header")]
+        widgets: list[Static | Input | BoundaryTextArea] = [Static(f"[b]{mode_label}[/b]", id="edit-header")]
 
         label_names = [ref.name for ref in self._label_directory]
         label_suggester = LabelSuggester(label_names) if label_names else None
+        user_suggester = None
+        if self._user_service:
+            user_names = self._user_service.get_all_display_names()
+            if user_names:
+                user_suggester = UserSuggester(user_names)
         values = self._original_values
 
         for field_id, label_text, placeholder in EDIT_FIELD_DEFS:
@@ -584,12 +755,16 @@ class DetailPanel(Widget):
                 widgets.append(Static("[b]Zeitplan[/b]", classes="edit-section"))
             elif field_id == "labels":
                 widgets.append(Static("[b]Labels[/b]", classes="edit-section"))
+            elif field_id == "participants":
+                widgets.append(Static("[b]Teilnehmer[/b]", classes="edit-section"))
+            elif field_id == "isPublic":
+                widgets.append(Static("[b]Optionen[/b]", classes="edit-section"))
             elif field_id == "reminder":
                 widgets.append(Static("[b]Benachrichtigungen[/b]", classes="edit-section"))
 
             widgets.append(Static(label_text, classes="edit-label"))
             if field_id == "description":
-                ta = TextArea(
+                ta = BoundaryTextArea(
                     text=values.get(field_id, ""),
                     id=f"edit-{field_id}",
                     classes="edit-textarea",
@@ -608,17 +783,14 @@ class DetailPanel(Widget):
                 )
                 if field_id == "labels" and label_suggester:
                     inp.suggester = label_suggester
+                elif field_id == "participants" and user_suggester:
+                    inp.suggester = user_suggester
                 widgets.append(inp)
 
         # Read-only fields
         if appt and appt.recurrence:
             widgets.append(Static(
                 f"\n[dim]Wiederholung (nur lesen):[/dim] {_format_recurrence(appt.recurrence)}",
-                classes="edit-hint",
-            ))
-        if appt and appt.participants:
-            widgets.append(Static(
-                f"[dim]Teilnehmer (nur lesen):[/dim] {len(appt.participants)}",
                 classes="edit-hint",
             ))
 
@@ -750,6 +922,31 @@ class DetailPanel(Widget):
         public_val = values.get("isPublic", "").strip().lower()
         appt.isPublic = public_val in ("ja", "true", "yes", "1")
 
+        # keepLabelParticipantsInSync
+        sync_val = values.get("keepLabelParticipantsInSync", "").strip().lower()
+        appt.keepLabelParticipantsInSync = sync_val in ("ja", "true", "yes", "1")
+
+        # Participants — resolve display names to user IDs
+        participants_text = values.get("participants", "").strip()
+        if participants_text and self._user_service:
+            names = [n.strip() for n in participants_text.split(",") if n.strip()]
+            new_participants = []
+            for name in names:
+                uid = self._user_service.get_user_id_by_display_name(name)
+                if uid is not None:
+                    new_participants.append({"userID": uid, "labelID": 0})
+            # Preserve existing non-direct participants (label-based)
+            existing_label_participants = [
+                p for p in (appt.participants or []) if p.get("labelID")
+            ]
+            appt.participants = existing_label_participants + new_participants
+        elif not participants_text:
+            # Clear direct participants, keep label-based
+            existing_label_participants = [
+                p for p in (appt.participants or []) if p.get("labelID")
+            ]
+            appt.participants = existing_label_participants
+
         # Reminder
         reminder_text = values.get("reminder", "").strip()
         if reminder_text:
@@ -849,6 +1046,20 @@ class DetailPanel(Widget):
             self._show_help_content(content)
         else:
             self._render_read_only(self._current_appointment, self._label_service)
+
+    async def _ensure_read_only_content(self) -> None:
+        """Ensure #detail-content exists, then re-render the current appointment."""
+        try:
+            scroll = self.query_one("#detail-scroll", VerticalScroll)
+        except Exception:
+            return
+        await scroll.remove_children()
+        content = Static("", id="detail-content", classes="help-text")
+        await scroll.mount(content)
+        if self._current_appointment:
+            self._render_read_only(self._current_appointment, self._label_service)
+        else:
+            self._show_help_content(content)
 
     def _show_help_content(self, content: Static) -> None:
         """Write help text into the given Static widget."""

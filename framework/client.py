@@ -302,3 +302,19 @@ class GroupAlarmClient:
         resp.raise_for_status()
         data = resp.json()
         return data.get("labels", []) if isinstance(data, dict) else data
+
+    def list_users(self, organization_id: int) -> List[Dict[str, Any]]:
+        """Fetch all users for an organization.
+
+        API: ``GET /users?organization={organization_id}``
+        """
+        if self.dry_run:
+            logger.info("[DRY-RUN] Would call GET /users?organization=%s", organization_id)
+            return []
+
+        url = f"{self.base_url}/users"
+        params: Dict[str, Any] = {"organization": organization_id}
+        resp = requests.get(url, headers=self.headers, params=params, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        return data if isinstance(data, list) else data.get("users", [])

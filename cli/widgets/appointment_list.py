@@ -20,6 +20,14 @@ class AppointmentSelected(Message):
         self.appointment_id = appointment_id
 
 
+class AppointmentHighlighted(Message):
+    """Posted when the cursor moves to a different appointment row."""
+
+    def __init__(self, appointment_id: int) -> None:
+        super().__init__()
+        self.appointment_id = appointment_id
+
+
 class AppointmentList(Widget):
     """Scrollable appointment list as a DataTable."""
 
@@ -103,6 +111,14 @@ class AppointmentList(Widget):
             try:
                 appt_id = int(event.row_key.value)
                 self.post_message(AppointmentSelected(appt_id))
+            except (ValueError, TypeError):
+                pass
+
+    def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
+        if event.row_key and event.row_key.value:
+            try:
+                appt_id = int(event.row_key.value)
+                self.post_message(AppointmentHighlighted(appt_id))
             except (ValueError, TypeError):
                 pass
 

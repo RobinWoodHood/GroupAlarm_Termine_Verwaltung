@@ -1,0 +1,19 @@
+# GroupAlarm TUI — Konfigurationsdatei
+# Kopiere diese Datei nach .groupalarm.toml und passe die Werte an.
+
+[general]
+# Deine GroupAlarm Organisations-ID (Pflichtfeld)
+organization_id = 12345
+
+# IANA-Zeitzone für die Datumsanzeige in der TUI
+timezone = "Europe/Berlin"
+
+[defaults]
+# Standardzeitraum: Termine der nächsten N Tage laden
+date_range_days = 30
+
+# Vorausgewählte Label-IDs beim Start (leer = alle Labels)
+label_ids = []
+
+# Standard-Dauer für neue Termine in Stunden
+appointment_duration_hours = 4

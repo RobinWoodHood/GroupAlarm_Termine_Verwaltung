@@ -11,6 +11,7 @@ from framework.client import GroupAlarmClient
 from framework.config import AppConfig, save_config
 from cli.services.label_service import LabelService
 from cli.services.appointment_service import AppointmentService
+from cli.services.user_service import UserService
 from cli.screens.main_screen import MainScreen
 
 logger = logging.getLogger(__name__)
@@ -48,6 +49,7 @@ class GroupAlarmApp(App):
         self._org_id = org_id
         self._dry_run = dry_run
         self._label_service: Optional[LabelService] = None
+        self._user_service: Optional[UserService] = None
         self._appt_service: Optional[AppointmentService] = None
 
     def on_mount(self) -> None:
@@ -67,6 +69,9 @@ class GroupAlarmApp(App):
         except Exception as exc:
             logger.warning("Failed to load labels: %s", exc)
 
+        self._user_service = UserService(self._client, self._org_id)
+        self._user_service.load()
+
         # Validate default_label_ids against fetched labels
         if self._config.default_label_ids and self._label_service:
             valid_ids = {label["id"] for label in self._label_service.labels}
@@ -84,6 +89,7 @@ class GroupAlarmApp(App):
             MainScreen(
                 appointment_service=self._appt_service,
                 label_service=self._label_service,
+                user_service=self._user_service,
                 config=self._config,
                 dry_run=self._dry_run,
             )

@@ -13,7 +13,7 @@ from textual.screen import Screen
 from textual.widgets import DataTable, LoadingIndicator, Static
 
 from cli.widgets.filter_bar import FilterBar, FilterChanged
-from cli.widgets.appointment_list import AppointmentList, AppointmentSelected
+from cli.widgets.appointment_list import AppointmentList, AppointmentSelected, AppointmentHighlighted
 from cli.widgets.detail_panel import DetailPanel
 from cli.widgets.confirmation_dialog import (
     ConfirmationDialog,
@@ -74,6 +74,7 @@ class MainScreen(Screen):
         self,
         appointment_service,
         label_service,
+        user_service=None,
         config=None,
         dry_run: bool = False,
         **kwargs,
@@ -81,6 +82,7 @@ class MainScreen(Screen):
         super().__init__(**kwargs)
         self._appt_service = appointment_service
         self._label_service = label_service
+        self._user_service = user_service
         self._config = config
         self._dry_run = dry_run
         self._selected_appointment_id: int | None = None
@@ -120,6 +122,8 @@ class MainScreen(Screen):
         # Provide label directory to detail panel for autocomplete/validation
         detail = self.query_one("#detail-panel", DetailPanel)
         detail.set_label_directory(self._build_label_directory())
+        if self._user_service:
+            detail.set_user_service(self._user_service)
         self._load_appointments()
         # Show empty-list hint if no appointments
         if not self._appt_service.appointments:
@@ -261,6 +265,17 @@ class MainScreen(Screen):
             return
         self._select_appointment(event.appointment_id)
 
+    def on_appointment_highlighted(self, event: AppointmentHighlighted) -> None:
+        detail = self.query_one("#detail-panel", DetailPanel)
+        # Don't update preview while in edit mode
+        if detail.edit_mode:
+            return
+        appt = self._appt_service.get_by_id(event.appointment_id)
+        if appt:
+            self._selected_appointment_id = event.appointment_id
+            display_tz = self._config.timezone if self._config else "Europe/Berlin"
+            detail.show_appointment(appt, self._label_service, display_tz=display_tz)
+
     def _select_appointment(self, appt_id: int) -> None:
         self._selected_appointment_id = appt_id
         self.navigation_state.set_list_cursor(appt_id)
@@ -269,6 +284,8 @@ class MainScreen(Screen):
             detail = self.query_one("#detail-panel", DetailPanel)
             display_tz = self._config.timezone if self._config else "Europe/Berlin"
             detail.show_appointment(appt, self._label_service, display_tz=display_tz)
+            # Enter/select in list → switch focus to detail panel
+            self._focus_detail_panel()
 
     def _handle_unsaved_on_selection(self, result: str) -> None:
         if result == "save":
@@ -396,6 +413,9 @@ class MainScreen(Screen):
                 "endDate": appt.endDate.strftime("%Y-%m-%d %H:%M"),
                 "organizationID": str(appt.organizationID),
                 "labels": ",".join(str(lid) for lid in appt.labelIDs) if appt.labelIDs else "",
+                "isPublic": "Ja" if appt.isPublic else "Nein",
+                "keepLabelParticipantsInSync": "Ja" if appt.keepLabelParticipantsInSync else "Nein",
+                "participants": str(len([p for p in appt.participants if not p.get("labelID")])) if appt.participants else "0",
             }
             body = ConfirmationDialog.build_create_summary(values)
             dialog = ConfirmationDialog(
@@ -699,9 +719,32 @@ class MainScreen(Screen):
         self._update_panel_focus_states("filter")
 
     def action_focus_list_panel(self) -> None:
+        detail = self.query_one("#detail-panel", DetailPanel)
+        # In edit mode, Left/Right are reserved for text cursor navigation
+        if detail.edit_mode:
+            return
+        if detail.dirty:
+            self.app.push_screen(
+                UnsavedChangesDialog(),
+                self._handle_unsaved_on_focus_list,
+            )
+            return
         self._focus_list_panel()
 
+    def _handle_unsaved_on_focus_list(self, result: str) -> None:
+        if result == "save":
+            self._do_save()
+        elif result == "discard":
+            detail = self.query_one("#detail-panel", DetailPanel)
+            detail.discard_changes()
+            self._focus_list_panel()
+        # "cancel" — stay on detail
+
     def action_focus_detail_panel(self) -> None:
+        detail = self.query_one("#detail-panel", DetailPanel)
+        # In edit mode, Left/Right are reserved for text cursor navigation
+        if detail.edit_mode:
+            return
         self._focus_detail_panel()
 
     def action_toggle_sort(self) -> None:

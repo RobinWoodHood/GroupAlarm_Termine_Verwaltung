@@ -1,0 +1,2512 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "description": "The user service is used to configure and manage users.",
+    "title": "User API specification",
+    "version": "680a5bdf474613965ad223d12ee304a2418b5439",
+    "x-logo": {
+      "href": "/",
+      "url": "https://www.groupalarm.com/images/logo.svg"
+    }
+  },
+  "paths": {
+    "/auth/activation": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Resends the activation email of the requesting user if the account is not activated yet.",
+        "operationId": "ResendActivation",
+        "responses": {
+          "200": {
+            "description": "email successfully re-sent or account is already activated"
+          },
+          "400": {
+            "description": "malformed request, e.g. user is not logged in"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      }
+    },
+    "/auth/change-email": {
+      "get": {
+        "tags": [
+          "email-change"
+        ],
+        "summary": "Return the current change request for the email-address of your personal user account.",
+        "operationId": "EmailChangeFetch",
+        "parameters": [
+          {
+            "description": "optional userID of a standalone-user associated with the new email",
+            "name": "userID",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "currently open request"
+          },
+          "400": {
+            "description": "received invalid data, check error message for more information"
+          },
+          "404": {
+            "description": "no open request found"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      },
+      "post": {
+        "description": "Must include the new email-address and a current mfa-code if mfa is enabled.",
+        "tags": [
+          "email-change"
+        ],
+        "summary": "Create a change request for the email-address of your personal user account.",
+        "operationId": "EmailChangeCreate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeEmailRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "request successfully created, check your email inbox to confirm the change"
+          },
+          "400": {
+            "description": "received invalid data or pre-checks failed, check error message for more information"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "email-change"
+        ],
+        "summary": "Abort the current change request for the email-address of your personal user account.",
+        "operationId": "EmailChangeAbort",
+        "parameters": [
+          {
+            "description": "optional userID of a standalone-user associated with the new email",
+            "name": "userID",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "currently open request successfully aborted"
+          },
+          "400": {
+            "description": "received invalid data, check error message for more information"
+          },
+          "404": {
+            "description": "no open request found"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "description": "Handles the user login and returns a user payload with JWT token",
+        "tags": [
+          "auth"
+        ],
+        "operationId": "Login",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "description": "The email for this account",
+                    "type": "string"
+                  },
+                  "password": {
+                    "description": "The password for this account",
+                    "type": "string"
+                  },
+                  "mfa": {
+                    "description": "The user's current mfa code. This code is required if the user enabled mfa for his account,\notherwise it can be left empty. To figure out if the user has mfa enabled, you need to login with\nusername and password first. A http 401 error containing \"MFA required\" allows you to ask the user\na current mfa code. Sending username and password again with the mfa code will finalize the login.\n",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "email",
+                  "password"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "user payload with token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "email or password incorrect / invalid or missing mfa code / user invitation pending"
+          },
+          "429": {
+            "description": "too many requests"
+          },
+          "500": {
+            "description": "error generating token"
+          }
+        },
+        "security": []
+      }
+    },
+    "/auth/sessions": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Returns a list of user sessions.",
+        "operationId": "ListUserSessions",
+        "parameters": [
+          {
+            "description": "max. amount of entries in list",
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 10
+            }
+          },
+          {
+            "description": "amount of entries to skip",
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "paginated list of user sessions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JWTRefreshTokenList"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      }
+    },
+    "/auth/sessions/{id}": {
+      "delete": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Terminates a specific user session.",
+        "operationId": "TerminateUserSession",
+        "parameters": [
+          {
+            "description": "id of user session",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "session successfully terminated"
+          },
+          "404": {
+            "description": "session not found"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      }
+    },
+    "/invite/config/text/{organizationID}": {
+      "get": {
+        "description": "Get the organization's saved invitation text configuration",
+        "tags": [
+          "invitation-config"
+        ],
+        "operationId": "GetInvitationText",
+        "parameters": [
+          {
+            "description": "organization by it's ID",
+            "name": "organizationID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "custom invitation text configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationText"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "missing or invalid data"
+          },
+          "403": {
+            "description": "rbac check failed"
+          },
+          "404": {
+            "description": "no configuration found"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      },
+      "put": {
+        "description": "Set the organization's invitation text configuration",
+        "tags": [
+          "invitation-config"
+        ],
+        "operationId": "SetInvitationText",
+        "parameters": [
+          {
+            "description": "organization by it's ID",
+            "name": "organizationID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvitationText"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "configuration saved successfully"
+          },
+          "400": {
+            "description": "missing or invalid data"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      }
+    },
+    "/mfa": {
+      "get": {
+        "description": "Check if the current user has MFA enabled or not",
+        "tags": [
+          "mfa"
+        ],
+        "operationId": "MFAIsActive",
+        "parameters": [
+          {
+            "description": "id of the organization. This is required if the user is queried",
+            "name": "organization",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "id of the user",
+            "name": "user",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "check was successfully completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MFAEnabledResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "missing user id in auth token"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      },
+      "put": {
+        "description": "Creates a new, disabled MFA config for the current user",
+        "tags": [
+          "mfa"
+        ],
+        "operationId": "MFACreate",
+        "responses": {
+          "200": {
+            "description": "config successfully created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MFACreateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "missing user id in auth token"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      },
+      "post": {
+        "description": "Enables a new MFA config for the current user",
+        "tags": [
+          "mfa"
+        ],
+        "operationId": "MFAEnable",
+        "parameters": [
+          {
+            "description": "current MFA code",
+            "name": "code",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "config successfully enabled"
+          },
+          "400": {
+            "description": "missing user id in auth token"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      },
+      "delete": {
+        "description": "Disables the MFA config for the current user",
+        "tags": [
+          "mfa"
+        ],
+        "operationId": "MFADisable",
+        "parameters": [
+          {
+            "description": "current MFA code",
+            "name": "code",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "config successfully disabled"
+          },
+          "400": {
+            "description": "missing user id in auth token"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      }
+    },
+    "/mfa/backup": {
+      "get": {
+        "description": "Creates ten new, one-time-use backup codes",
+        "tags": [
+          "mfa"
+        ],
+        "operationId": "MFAGenerateBackupCodes",
+        "responses": {
+          "200": {
+            "description": "codes successfully created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MFABackupCodesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "missing user id in auth token"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      }
+    },
+    "/user": {
+      "delete": {
+        "description": "Can only be used after leaving all organizations.",
+        "tags": [
+          "user"
+        ],
+        "summary": "Deletes the current user irreversibly.",
+        "operationId": "DeleteUser",
+        "responses": {
+          "200": {
+            "description": "user was successfully deleted"
+          },
+          "400": {
+            "description": "parameters missing or in wrong format"
+          },
+          "403": {
+            "description": "user is still a member of an organization"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      }
+    },
+    "/user-settings": {
+      "get": {
+        "description": "Get the current user's saved settings or the default settings if none are found",
+        "tags": [
+          "settings"
+        ],
+        "operationId": "GetSettings",
+        "responses": {
+          "200": {
+            "description": "user-defined settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "missing user id in auth token"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      },
+      "put": {
+        "description": "Saves the current user's settings",
+        "tags": [
+          "settings"
+        ],
+        "operationId": "StoreSettings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserSettings"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "settings successfully saved"
+          },
+          "400": {
+            "description": "missing user id in auth token"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      }
+    },
+    "/user/": {
+      "get": {
+        "description": "Gets the complete user payload from the passed JWT token",
+        "tags": [
+          "user"
+        ],
+        "operationId": "GetUser",
+        "responses": {
+          "200": {
+            "description": "complete user payload for JWT token for queried email",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Bearer token couldn't be parsed"
+          },
+          "422": {
+            "description": "Token claims couldn't be parsed"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      },
+      "put": {
+        "description": "Updates the user profile",
+        "tags": [
+          "user"
+        ],
+        "operationId": "UpdateUser",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdate"
+              }
+            }
+          },
+          "description": "passed user update payload with new user preferences",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "user was successfully updated"
+          },
+          "403": {
+            "description": "user can't be edited from a different organization or user doesn't want to be edited by an organization administrator"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      }
+    },
+    "/user/availability": {
+      "get": {
+        "tags": [
+          "availability"
+        ],
+        "summary": "Returns a list of the current user's global and organization-wide availability.",
+        "operationId": "GetUserAvailability",
+        "responses": {
+          "200": {
+            "description": "list of global and organization-wide availabilities",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserOrganizationAvailability"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "availability"
+        ],
+        "summary": "Immediately sets the current user's global or organization-wide availability.",
+        "operationId": "SetUserAvailability",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserOrganizationAvailability"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "availability updated"
+          },
+          "400": {
+            "description": "invalid data"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      },
+      "delete": {
+        "description": "Immediately removes the current user's organization-wide availability override. Afterwards the organization\nwill return to using the user's global availability.\nIf there are scheduled availability changes for the user in this organization, they will be kept and executed\nas planned.",
+        "tags": [
+          "availability"
+        ],
+        "operationId": "RemoveUserOrganizationAvailability",
+        "parameters": [
+          {
+            "name": "organization_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "availability reset"
+          },
+          "400": {
+            "description": "invalid data"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      }
+    },
+    "/user/invite": {
+      "post": {
+        "description": "Invites an existing or new user to an organization and sends an invitation email to the passed address",
+        "tags": [
+          "user"
+        ],
+        "operationId": "InviteUser",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/UserInvite"
+        },
+        "responses": {
+          "200": {
+            "description": "users were successfully invited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserInviteResult"
+                  }
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "as the amount of invitations is greater than 10, the invitations will be processed in background. The\nrequesting user will be notified via email after the process is complete.\n"
+          },
+          "400": {
+            "description": "user invite payload is missing or in the wrong format"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      }
+    },
+    "/user/invite/owner": {
+      "post": {
+        "description": "Invite the passed owner to the organization",
+        "tags": [
+          "user"
+        ],
+        "operationId": "InviteOwner",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OwnerInvite"
+              }
+            }
+          },
+          "description": "owner invite payload",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "owner was successfully invited"
+          },
+          "400": {
+            "description": "owner invite payload is missing or in the wrong format"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      }
+    },
+    "/user/organization-availability": {
+      "get": {
+        "description": "Returns all organization availabilities for the current user",
+        "tags": [
+          "user"
+        ],
+        "operationId": "GetOrganizationAvailability",
+        "responses": {
+          "200": {
+            "description": "all organization availabilities"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      }
+    },
+    "/user/resend": {
+      "post": {
+        "description": "Resends the invitation email of an existing user to an organization",
+        "tags": [
+          "user"
+        ],
+        "operationId": "ResendInvitation",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/UserInvite"
+        },
+        "responses": {
+          "200": {
+            "description": "user was successfully invited"
+          },
+          "400": {
+            "description": "user invite payload is missing or in the wrong format"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      }
+    },
+    "/user/{userID}": {
+      "get": {
+        "description": "Returns a specific user with the passed api for organization members",
+        "tags": [
+          "user"
+        ],
+        "operationId": "GetSpecificUser",
+        "parameters": [
+          {
+            "description": "ID of an user",
+            "name": "userID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "ID of the organization",
+            "name": "organization",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "returns the requested user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      }
+    },
+    "/user/{userID}/deployment-notification": {
+      "get": {
+        "description": "Returns the deployment notification configuration for the given user",
+        "tags": [
+          "user"
+        ],
+        "operationId": "GetDeploymentNotification",
+        "parameters": [
+          {
+            "description": "user by his ID",
+            "name": "userID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "deployment notification configuration was retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDeploymentNotificationConfiguration"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "parameters missing or in the wrong format"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      },
+      "post": {
+        "description": "Creates or updates a user deployment notification for the given user",
+        "tags": [
+          "user"
+        ],
+        "operationId": "UpsertDeploymentNotification",
+        "parameters": [
+          {
+            "description": "user by his ID",
+            "name": "userID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserDeploymentNotificationConfiguration"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "deployment notification configuration was upserted successfully"
+          },
+          "400": {
+            "description": "parameters missing or in the wrong format"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      }
+    },
+    "/user/{userID}/invites": {
+      "get": {
+        "description": "Lists all pending invites for the requesting user",
+        "tags": [
+          "user"
+        ],
+        "operationId": "ListOrganizationInvitations",
+        "parameters": [
+          {
+            "description": "user by his ID",
+            "name": "userID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "user was successfully invited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Invitation"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "couldn't parse userID out of token"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      }
+    },
+    "/user/{userID}/{organizationID}": {
+      "delete": {
+        "description": "Removes a user from an organization",
+        "tags": [
+          "user"
+        ],
+        "operationId": "DeleteUserFromOrganization",
+        "parameters": [
+          {
+            "description": "user by his ID",
+            "name": "userID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "organization by it's ID",
+            "name": "organizationID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "user was successfully removed from organization"
+          },
+          "400": {
+            "description": "parameters missing or in the wrong format"
+          },
+          "403": {
+            "description": "the last organization admin can not leave the organization"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "description": "Returns all users from an organization",
+        "tags": [
+          "users"
+        ],
+        "operationId": "GetUsersInOrganization",
+        "parameters": [
+          {
+            "description": "organization by it's ID",
+            "name": "organization",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "all users from organization with passed id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PublicUser"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      }
+    },
+    "/users/availability": {
+      "get": {
+        "description": "Returns the current user's saved availability change",
+        "tags": [
+          "availability"
+        ],
+        "operationId": "GetUserAvailabilityChange",
+        "responses": {
+          "200": {
+            "description": "current user's saved availability change",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserAvailabilityChange"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "user-id not found"
+          },
+          "404": {
+            "description": "no saved availability change found"
+          },
+          "500": {
+            "description": "unexpected internal error"
+          }
+        }
+      },
+      "post": {
+        "description": "Add a new availability change for the current user or update an existing one",
+        "tags": [
+          "availability"
+        ],
+        "operationId": "AddUserAvailabilityChange",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserAvailabilityChange"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "availability change created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserAvailabilityChange"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "invalid data in body"
+          },
+          "500": {
+            "description": "unexpected internal error"
+          }
+        }
+      }
+    },
+    "/users/pagination": {
+      "get": {
+        "description": "Returns all users from an organization with pagination",
+        "tags": [
+          "users"
+        ],
+        "operationId": "GetUsersInOrganizationPagination",
+        "parameters": [
+          {
+            "description": "organization by it's ID",
+            "name": "organization",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "search query to filter user by name, surname or email",
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "max. amount of entries in list",
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 10
+            }
+          },
+          {
+            "description": "amount of entries to skip",
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "description": "order query by column (either sur_name or name, defaults to sur_name)",
+            "name": "orderby",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "sur_name",
+                "name"
+              ],
+              "default": "sur_name"
+            }
+          },
+          {
+            "description": "order direction of orderby (either asc or desc, defaults to asc)",
+            "name": "orderdir",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "asc"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "all users from organization with passed id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PublicUserList"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      }
+    },
+    "/users/recurring-availability": {
+      "get": {
+        "description": "Returns a list of all recurring availability changes created by the current user",
+        "tags": [
+          "recurring-availability"
+        ],
+        "operationId": "ListRecurringAvailabilityChanges",
+        "parameters": [
+          {
+            "description": "max. amount of entries in list",
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 10
+            }
+          },
+          {
+            "description": "amount of entries to skip",
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "description": "id of an organization",
+            "name": "organization",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "paginated list of current user's recurring availability changes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecurringUserAvailabilityChangesList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "userID not found"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      },
+      "post": {
+        "description": "Create a new recurring availability change for the current user",
+        "tags": [
+          "recurring-availability"
+        ],
+        "operationId": "CreateRecurringAvailabilityChange",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/RecurringUserAvailabilityChange"
+        },
+        "responses": {
+          "201": {
+            "description": "recurring availability change successfully created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecurringUserAvailabilityChange"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "invalid request data"
+          },
+          "403": {
+            "description": "access to different user prevented"
+          },
+          "409": {
+            "description": "new change would be created inside existing changes"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      }
+    },
+    "/users/recurring-availability/{changeID}": {
+      "put": {
+        "description": "Updates an existing recurring availability change for the current user",
+        "tags": [
+          "recurring-availability"
+        ],
+        "operationId": "UpdateRecurringAvailabilityChange",
+        "parameters": [
+          {
+            "name": "changeID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/RecurringUserAvailabilityChange"
+        },
+        "responses": {
+          "200": {
+            "description": "recurring availability change successfully updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecurringUserAvailabilityChange"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "invalid request data"
+          },
+          "403": {
+            "description": "access to different user prevented"
+          },
+          "404": {
+            "description": "recurring availability change not found"
+          },
+          "409": {
+            "description": "updated change would be moved inside existing changes"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      },
+      "delete": {
+        "description": "Deletes an existing recurring availability change for the current user",
+        "tags": [
+          "recurring-availability"
+        ],
+        "operationId": "DeleteRecurringAvailabilityChange",
+        "parameters": [
+          {
+            "name": "changeID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "recurring availability change successfully deleted"
+          },
+          "400": {
+            "description": "invalid request data"
+          },
+          "403": {
+            "description": "access to different user prevented"
+          },
+          "404": {
+            "description": "recurring availability change not found"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      }
+    },
+    "/users/scheduled-availability": {
+      "get": {
+        "description": "Returns a list of all scheduled availability changes created by the current user",
+        "tags": [
+          "scheduled-availability"
+        ],
+        "operationId": "ListScheduledAvailabilityChanges",
+        "parameters": [
+          {
+            "description": "max. amount of entries in list",
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 10
+            }
+          },
+          {
+            "description": "amount of entries to skip",
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "paginated list of current user's scheduled availability changes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledUserAvailabilityChangesList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "userID not found"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      },
+      "post": {
+        "description": "Create a new scheduled availability change for the current user",
+        "tags": [
+          "scheduled-availability"
+        ],
+        "operationId": "CreateScheduledAvailabilityChange",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduledUserAvailabilityChange"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "scheduled availability change successfully created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledUserAvailabilityChange"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "invalid request data"
+          },
+          "403": {
+            "description": "access to different user prevented"
+          },
+          "409": {
+            "description": "new change would be created inside existing changes"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      }
+    },
+    "/users/scheduled-availability/{changeID}": {
+      "delete": {
+        "description": "Deletes an existing scheduled availability change for the current user",
+        "tags": [
+          "scheduled-availability"
+        ],
+        "operationId": "DeleteScheduledAvailabilityChange",
+        "parameters": [
+          {
+            "name": "changeID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "scheduled availability change successfully deleted"
+          },
+          "400": {
+            "description": "invalid request data"
+          },
+          "403": {
+            "description": "access to different user prevented"
+          },
+          "404": {
+            "description": "scheduled availability change not found"
+          },
+          "500": {
+            "description": "unexpected error"
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "API-TOKEN": [
+        "[]"
+      ]
+    },
+    {
+      "Personal-Access-Token": [
+        "[]"
+      ]
+    }
+  ],
+  "servers": [
+    {
+      "url": "https://app.groupalarm.com/api/v1"
+    }
+  ],
+  "components": {
+    "requestBodies": {
+      "RecurringUserAvailabilityChange": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/RecurringUserAvailabilityChange"
+            }
+          }
+        },
+        "required": true
+      },
+      "UserInvite": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/UserInvite"
+            }
+          }
+        },
+        "description": "invitation payload",
+        "required": true
+      }
+    },
+    "securitySchemes": {
+      "API-TOKEN": {
+        "description": "You can generate an API-Token in the permissions-settings of your organization.\nAll requests will be performed in the scope of this organization. Requests regarding users will fail.\n",
+        "type": "apiKey",
+        "name": "API-TOKEN",
+        "in": "header"
+      },
+      "Personal-Access-Token": {
+        "description": "You can generate a Personal Access Token in your profile settings.\nAll requests will be performed as the user who created the token, with permissions as configured in each organization.",
+        "type": "apiKey",
+        "name": "Personal-Access-Token",
+        "in": "header"
+      }
+    },
+    "schemas": {
+      "BulkUserElement": {
+        "description": "BulkUserElement describes an user bulk element",
+        "type": "object",
+        "properties": {
+          "devices": {
+            "$ref": "#/components/schemas/Devices"
+          },
+          "email": {
+            "type": "string",
+            "x-go-name": "Email"
+          },
+          "externalID": {
+            "type": "string",
+            "x-go-name": "ExternalID"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "ID"
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Label"
+            },
+            "x-go-name": "Labels"
+          },
+          "language": {
+            "type": "string",
+            "x-go-name": "Language"
+          },
+          "name": {
+            "type": "string",
+            "x-go-name": "Name"
+          },
+          "rank": {
+            "$ref": "#/components/schemas/Rank"
+          },
+          "roles": {
+            "type": "array",
+            "items": {},
+            "x-go-name": "Roles"
+          },
+          "surname": {
+            "type": "string",
+            "x-go-name": "Surname"
+          }
+        },
+        "x-go-package": "groupalarm/go/user/api/services"
+      },
+      "ChangeEmailRequest": {
+        "description": "ChangeEmailRequest is used to update a user's email address",
+        "type": "object",
+        "required": [
+          "newEmail"
+        ],
+        "properties": {
+          "mfaCode": {
+            "description": "current mfa-code is required if mfa is enabled for the user's account",
+            "type": "string",
+            "x-go-name": "MFACode"
+          },
+          "newEmail": {
+            "description": "new email-address for the user's account",
+            "type": "string",
+            "x-go-name": "NewEmail"
+          },
+          "userID": {
+            "description": "optional userID of a standalone-user associated with the new email",
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID"
+          }
+        },
+        "x-go-package": "groupalarm/go/user/api/handler"
+      },
+      "DashboardConfiguration": {
+        "type": "object",
+        "title": "DashboardConfiguration is used to save preferences about dashboard configurations per user and organization.",
+        "properties": {
+          "quickActions": {
+            "$ref": "#/components/schemas/QuickActionsConfiguration"
+          }
+        },
+        "x-go-package": "groupalarm/go/user/api/services"
+      },
+      "Devices": {
+        "description": "Devices contains the alarm devices that should be created",
+        "type": "object",
+        "properties": {
+          "emails": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Email"
+            },
+            "x-go-name": "Emails"
+          },
+          "mobiles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Mobile"
+            },
+            "x-go-name": "Mobiles"
+          },
+          "phones": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Phone"
+            },
+            "x-go-name": "Phones"
+          }
+        },
+        "x-go-package": "groupalarm/go/user/api/services"
+      },
+      "Email": {
+        "description": "Email contains the details for an email address for email notifications",
+        "type": "object",
+        "properties": {
+          "active": {
+            "type": "boolean",
+            "x-go-name": "Active"
+          },
+          "email": {
+            "type": "string",
+            "x-go-name": "Email"
+          },
+          "name": {
+            "type": "string",
+            "x-go-name": "Name"
+          },
+          "ownerID": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "OwnerID"
+          }
+        },
+        "x-go-package": "groupalarm/go/user/api/services"
+      },
+      "ImportResult": {
+        "description": "ImportResult describes the result of an import",
+        "type": "string",
+        "x-go-package": "groupalarm/go/user/api/services"
+      },
+      "Invitation": {
+        "description": "Invitation holds every information one could need to display an invitation from an organization in the UI",
+        "type": "object",
+        "properties": {
+          "organizationID": {
+            "description": "ID of the organization that is inviting the user",
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "OrganizationID"
+          },
+          "token": {
+            "description": "Token to accept the invitation",
+            "type": "string",
+            "x-go-name": "Token"
+          }
+        },
+        "x-go-package": "groupalarm/go/user/api/services"
+      },
+      "InvitationText": {
+        "description": "InvitationText contains all information about a custom invitation text",
+        "type": "object",
+        "properties": {
+          "organization_id": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "OrganizationID"
+          },
+          "text": {
+            "type": "string",
+            "x-go-name": "Text"
+          }
+        },
+        "x-go-package": "groupalarm/go/user/api/services"
+      },
+      "JWTRefreshToken": {
+        "description": "JWTRefreshToken contains information about a single JWT Refresh Token",
+        "type": "object",
+        "properties": {
+          "creationTime": {
+            "x-go-name": "CreationTime"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "ID"
+          },
+          "ipAddress": {
+            "type": "string",
+            "x-go-name": "IPAddress"
+          },
+          "isExpired": {
+            "type": "boolean",
+            "x-go-name": "IsExpired"
+          },
+          "sequence": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "Sequence"
+          },
+          "sequenceMinimum": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "SequenceMinimum"
+          },
+          "usageTime": {
+            "x-go-name": "UsageTime"
+          },
+          "userAgent": {
+            "type": "string",
+            "x-go-name": "UserAgent"
+          },
+          "userID": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID"
+          }
+        },
+        "x-go-package": "groupalarm/go/user/api/services"
+      },
+      "JWTRefreshTokenList": {
+        "description": "JWTRefreshTokenList is used as a paginated list of user sessions",
+        "type": "object",
+        "properties": {
+          "tokens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JWTRefreshToken"
+            },
+            "x-go-name": "Tokens"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "Total"
+          }
+        },
+        "x-go-package": "groupalarm/go/user/api/services"
+      },
+      "Label": {
+        "description": "Label describes a label payload",
+        "type": "object",
+        "properties": {
+          "assignees": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "x-go-name": "Assignees"
+          },
+          "color": {
+            "type": "string",
+            "x-go-name": "Color"
+          },
+          "description": {
+            "type": "string",
+            "x-go-name": "Description"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "ID"
+          },
+          "name": {
+            "type": "string",
+            "x-go-name": "Name"
+          },
+          "organizationID": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "OrganizationID"
+          }
+        },
+        "x-go-package": "groupalarm/go/user/api/services"
+      },
+      "MFABackupCodesResponse": {
+        "description": "MFABackupCodesResponse contains a list of one-time-use emergency backup codes",
+        "type": "object",
+        "properties": {
+          "backupCodes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-go-name": "BackupCodes"
+          }
+        },
+        "x-go-package": "groupalarm/go/user/api/services"
+      },
+      "MFACreateResponse": {
+        "description": "MFACreateResponse contains all information for the user to add this account to his MFA app",
+        "type": "object",
+        "properties": {
+          "image": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint8"
+            },
+            "x-go-name": "Image"
+          },
+          "secret": {
+            "type": "string",
+            "x-go-name": "Secret"
+          },
+          "url": {
+            "type": "string",
+            "x-go-name": "URL"
+          }
+        },
+        "x-go-package": "groupalarm/go/user/api/services"
+      },
+      "MFAEnabledResponse": {
+        "description": "MFAEnabledResponse contains whether the user has MFA enabled or not",
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "x-go-name": "Enabled"
+          }
+        },
+        "x-go-package": "groupalarm/go/user/api/services"
+      },
+      "Mobile": {
+        "description": "Mobile contains the details for a mobile device for sms notifications",
+        "type": "object",
+        "properties": {
+          "active": {
+            "type": "boolean",
+            "x-go-name": "Active"
+          },
+          "gsm": {
+            "type": "string",
+            "x-go-name": "GSM"
+          },
+          "name": {
+            "type": "string",
+            "x-go-name": "Name"
+          },
+          "ownerID": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "OwnerID"
+          }
+        },
+        "x-go-package": "groupalarm/go/user/api/services"
+      },
+      "Organization": {
+        "description": "Organization defines an organization payload",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "ID"
+          },
+          "name": {
+            "type": "string",
+            "x-go-name": "Name"
+          }
+        },
+        "x-go-package": "groupalarm/go/user/api/services"
+      },
+      "OwnerInvite": {
+        "description": "OwnerInvite describes a payload to invite an owner to the organization",
+        "type": "object",
+        "properties": {
+          "organizationID": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "OrganizationID"
+          },
+          "ownerID": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "OwnerID"
+          }
+        },
+        "x-go-package": "groupalarm/go/user/api/services"
+      },
+      "Phone": {
+        "description": "Phone contains the details for a phone device for call notifications",
+        "type": "object",
+        "properties": {
+          "active": {
+            "type": "boolean",
+            "x-go-name": "Active"
+          },
+          "gsm": {
+            "type": "string",
+            "x-go-name": "GSM"
+          },
+          "name": {
+            "type": "string",
+            "x-go-name": "Name"
+          },
+          "ownerID": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "OwnerID"
+          }
+        },
+        "x-go-package": "groupalarm/go/user/api/services"
+      },
+      "PublicUser": {
+        "description": "PublicUser describes a public user payload",
+        "type": "object",
+        "properties": {
+          "availablePreference": {
+            "description": "defines the status the user has selected; will be set to false if user invitation is pending",
+            "type": "boolean",
+            "x-go-name": "AvailablePreference"
+          },
+          "availableStatus": {
+            "description": "defines the status the user is currently in; will be set to UserNotAvailable if user invitation is pending",
+            "x-go-name": "AvailableStatus"
+          },
+          "avatarURL": {
+            "description": "URL to the avatar of the user",
+            "type": "string",
+            "x-go-name": "AvatarURL"
+          },
+          "editable": {
+            "description": "defines if the users allows admins to edit his personal data and devices",
+            "type": "boolean",
+            "x-go-name": "Editable"
+          },
+          "email": {
+            "description": "users email address",
+            "type": "string",
+            "x-go-name": "Email"
+          },
+          "externalID": {
+            "description": "identifies a user in an external system",
+            "type": "string",
+            "x-go-name": "ExternalID"
+          },
+          "id": {
+            "description": "ID for this user",
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "ID"
+          },
+          "name": {
+            "description": "name of the user",
+            "type": "string",
+            "x-go-name": "Name"
+          },
+          "pending": {
+            "description": "defines an pending invitation (user is known, but hasn't logged in yet)",
+            "type": "boolean",
+            "x-go-name": "Pending"
+          },
+          "surname": {
+            "description": "surname of the user",
+            "type": "string",
+            "x-go-name": "Surname"
+          }
+        },
+        "x-go-package": "groupalarm/go/user/api/services"
+      },
+      "PublicUserList": {
+        "description": "PublicUserList describes a list of PublicUsers for pagination",
+        "type": "object",
+        "properties": {
+          "publicUsers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublicUser"
+            },
+            "x-go-name": "PublicUsers"
+          },
+          "totalPublicUsers": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "TotalPublicUsers"
+          }
+        },
+        "x-go-package": "groupalarm/go/user/api/services"
+      },
+      "QuickActionsConfiguration": {
+        "description": "QuickActionsConfiguration is used to save preferences about the quick action dashboard panel",
+        "type": "object",
+        "additionalProperties": {
+          "type": "boolean"
+        },
+        "x-go-package": "groupalarm/go/user/api/services"
+      },
+      "Rank": {
+        "description": "Rank contains the user friendly name and value of a rank",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "x-go-name": "Name"
+          },
+          "value": {
+            "type": "string",
+            "x-go-name": "Value"
+          }
+        },
+        "x-go-package": "groupalarm/go/user/api/services"
+      },
+      "RecurringUserAvailabilityChange": {
+        "description": "RecurringUserAvailabilityChange contains all information for a user's recurring availability change",
+        "type": "object",
+        "properties": {
+          "active": {
+            "type": "boolean",
+            "x-go-name": "Active"
+          },
+          "changeDay": {
+            "description": "ChangeDay is the integer description of the day in the week when a change should occur.\nSunday = 0, Monday = 1, ...",
+            "x-go-name": "ChangeDay"
+          },
+          "changeStatus": {
+            "$ref": "#/components/schemas/UserAvailabilityStatus"
+          },
+          "changeTime": {
+            "description": "ChangeTime it the UTC time when a change should occur, formatted as \"15:04:05\".",
+            "type": "string",
+            "x-go-name": "ChangeTime"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "ID"
+          },
+          "organizationID": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "OrganizationID"
+          },
+          "userID": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID"
+          }
+        },
+        "x-go-package": "groupalarm/go/user/api/services"
+      },
+      "RecurringUserAvailabilityChangesList": {
+        "description": "RecurringUserAvailabilityChangesList is used for pagination of RecurringUserAvailabilityChange​s",
+        "type": "object",
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecurringUserAvailabilityChange"
+            },
+            "x-go-name": "Entries"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "Total"
+          }
+        },
+        "x-go-package": "groupalarm/go/user/api/services"
+      },
+      "ScheduledUserAvailabilityChange": {
+        "description": "ScheduledUserAvailabilityChange contains all information for an user's scheduled availability change",
+        "type": "object",
+        "properties": {
+          "changeStatus": {
+            "$ref": "#/components/schemas/UserAvailabilityStatus"
+          },
+          "changeTime": {
+            "x-go-name": "ChangeTime"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "ID"
+          },
+          "userID": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID"
+          }
+        },
+        "x-go-package": "groupalarm/go/user/api/services"
+      },
+      "ScheduledUserAvailabilityChangesList": {
+        "description": "ScheduledUserAvailabilityChangesList is used for pagination of ScheduledUserAvailabilityChange​s",
+        "type": "object",
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScheduledUserAvailabilityChange"
+            },
+            "x-go-name": "Entries"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "Total"
+          }
+        },
+        "x-go-package": "groupalarm/go/user/api/services"
+      },
+      "TableConfiguration": {
+        "description": "Using null or empty values will remove a specific field from the stored settings and result in usage of the default values.",
+        "type": "object",
+        "title": "TableConfiguration is used to save preferences for UI Tables.",
+        "properties": {
+          "activeColumns": {
+            "description": "ActiveColumns defines which columns are actively displayed",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-go-name": "ActiveColumns"
+          },
+          "orderByColumn": {
+            "description": "OrderByColumn contains the column name the table is ordered by",
+            "type": "string",
+            "x-go-name": "OrderByColumn"
+          },
+          "orderByDirection": {
+            "description": "OrderByDirection describes in which direction the OrderByColumn is ordered (\"asc\", \"desc\" or empty)",
+            "type": "string",
+            "x-go-name": "OrderByDirection"
+          },
+          "pageSize": {
+            "description": "PageSize defines how man rows should be displayed per page",
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "PageSize"
+          }
+        },
+        "x-go-package": "groupalarm/go/user/api/services"
+      },
+      "User": {
+        "description": "User is the comprehensive data structure containing all data of a single user",
+        "type": "object",
+        "properties": {
+          "active": {
+            "description": "true if email is verified and account fully activated; false otherwise",
+            "type": "boolean",
+            "x-go-name": "Active"
+          },
+          "availablePreference": {
+            "description": "true if user wants to be available for new alarms; false otherwise",
+            "type": "boolean",
+            "x-go-name": "AvailablePreference"
+          },
+          "avatarURL": {
+            "description": "URL to the avatar of the user",
+            "type": "string",
+            "x-go-name": "AvatarURL"
+          },
+          "chatToken": {
+            "description": "token for support chat",
+            "type": "string",
+            "x-go-name": "ChatToken"
+          },
+          "editable": {
+            "description": "true if organization administrators are allowed to edit this users devices; false otherwise",
+            "type": "boolean",
+            "x-go-name": "Editable"
+          },
+          "email": {
+            "description": "email address of the user",
+            "type": "string",
+            "x-go-name": "Email"
+          },
+          "id": {
+            "description": "unique user id",
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "ID"
+          },
+          "name": {
+            "description": "name of the user",
+            "type": "string",
+            "x-go-name": "Name"
+          },
+          "pending": {
+            "description": "true if user is invited, but has not logged in yet; false otherwise",
+            "type": "boolean",
+            "x-go-name": "Pending"
+          },
+          "registrationDate": {
+            "description": "date this account was created (by registration or invitation)",
+            "x-go-name": "RegistrationDate"
+          },
+          "surname": {
+            "description": "surname of the user",
+            "type": "string",
+            "x-go-name": "Surname"
+          },
+          "token": {
+            "description": "current JWT token for this session",
+            "type": "string",
+            "x-go-name": "Token"
+          }
+        },
+        "x-go-package": "groupalarm/go/user/api/services"
+      },
+      "UserAvailabilityChange": {
+        "description": "UserAvailabilityChange contains all information for an user's scheduled availability change",
+        "type": "object",
+        "properties": {
+          "duration": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "Duration"
+          },
+          "start_time": {
+            "x-go-name": "StartTime"
+          },
+          "user_id": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID"
+          }
+        },
+        "x-go-package": "groupalarm/go/user/api/services"
+      },
+      "UserAvailabilityStatus": {
+        "description": "UserAvailabilityStatus represents the new status a user should be in after processing a change request",
+        "type": "string",
+        "x-go-package": "groupalarm/go/user/api/services"
+      },
+      "UserDeploymentNotificationConfiguration": {
+        "description": "UserDeploymentNotificationConfiguration describes a UserDeploymentNotificationConfiguration",
+        "type": "object",
+        "properties": {
+          "emails": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-go-name": "Emails"
+          },
+          "enabled": {
+            "type": "boolean",
+            "x-go-name": "Enabled"
+          },
+          "notificationText": {
+            "type": "string",
+            "x-go-name": "NotificationText"
+          },
+          "userID": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID"
+          }
+        },
+        "x-go-package": "groupalarm/go/user/api/services"
+      },
+      "UserInvite": {
+        "description": "UserInvite describes an user invite payload",
+        "type": "object",
+        "required": [
+          "organization",
+          "users"
+        ],
+        "properties": {
+          "createNewLabels": {
+            "description": "If set to true while importing a user with a label name but not an id,\nwe will automatically create and assign this label.\nThis setting will only work in conjunction with MapLabelsByName.",
+            "type": "boolean",
+            "x-go-name": "CreateNewLabels"
+          },
+          "mapLabelsByName": {
+            "description": "If set to true while importing a user with a label name but not an id,\nwe will try to find a label with this name and assign it.",
+            "type": "boolean",
+            "x-go-name": "MapLabelsByName"
+          },
+          "organization": {
+            "$ref": "#/components/schemas/Organization"
+          },
+          "removeAssignedData": {
+            "description": "If set to true, all assigned data will be removed from the user, before new data is assigned.",
+            "type": "boolean",
+            "x-go-name": "RemoveAssignedData"
+          },
+          "updateExistingUsers": {
+            "description": "If set to true, existing users will be updated with the new data.\nIf set to false, existing users will not be updated.\nIf set to false und the user is already in the organization, the user will be skipped and an error will be returned.",
+            "type": "boolean",
+            "x-go-name": "UpdateExistingUsers"
+          },
+          "users": {
+            "description": "array of user bulk elements",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BulkUserElement"
+            },
+            "x-go-name": "Users"
+          }
+        },
+        "x-go-package": "groupalarm/go/user/api/services"
+      },
+      "UserInviteResult": {
+        "description": "UserInviteResult describes the import result payload",
+        "type": "object",
+        "properties": {
+          "importResult": {
+            "$ref": "#/components/schemas/ImportResult"
+          },
+          "user": {
+            "$ref": "#/components/schemas/BulkUserElement"
+          }
+        },
+        "x-go-package": "groupalarm/go/user/api/services"
+      },
+      "UserOrganizationAvailability": {
+        "type": "object",
+        "title": "UserOrganizationAvailability is used to immediately set the current user's global or organization-wide availability.",
+        "properties": {
+          "organizationID": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "OrganizationID"
+          },
+          "preference": {
+            "type": "boolean",
+            "x-go-name": "Preference"
+          },
+          "userID": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "UserID"
+          }
+        },
+        "x-go-package": "groupalarm/go/user/api/handler"
+      },
+      "UserSettings": {
+        "description": "UserSettings contains all user-defined settings",
+        "type": "object",
+        "properties": {
+          "checks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-go-name": "Checks"
+          },
+          "dashboardConfigurations": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/DashboardConfiguration"
+            },
+            "x-go-name": "DashboardConfigurations"
+          },
+          "defaultOrganizationId": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "DefaultOrganizationID"
+          },
+          "helpTexts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-go-name": "HelpTexts"
+          },
+          "hideExpiredTrial": {
+            "type": "boolean",
+            "x-go-name": "HideExpiredTrial"
+          },
+          "language": {
+            "type": "string",
+            "x-go-name": "Language"
+          },
+          "setupCurrentPath": {
+            "type": "string",
+            "x-go-name": "SetupCurrentPath"
+          },
+          "setupDone": {
+            "type": "boolean",
+            "x-go-name": "SetupDone"
+          },
+          "setupOrganizationID": {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "SetupOrganizationID"
+          },
+          "showFeedbackButton": {
+            "type": "boolean",
+            "x-go-name": "ShowFeedbackButton"
+          },
+          "tableConfigurations": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/TableConfiguration"
+            },
+            "x-go-name": "TableConfigurations"
+          },
+          "theme": {
+            "type": "string",
+            "x-go-name": "Theme"
+          },
+          "tracking": {
+            "type": "boolean",
+            "x-go-name": "Tracking"
+          }
+        },
+        "x-go-package": "groupalarm/go/user/api/services"
+      },
+      "UserUpdate": {
+        "description": "UserUpdate describes an user update payload",
+        "type": "object",
+        "required": [
+          "user"
+        ],
+        "properties": {
+          "organizationId": {
+            "description": "id of the editing organization\nnot needed if user is editing himself",
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "OrganizationID"
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          }
+        },
+        "x-go-package": "groupalarm/go/user/api/services"
+      }
+    }
+  }
+}

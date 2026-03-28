@@ -29,6 +29,8 @@ SECTION_MAP = {
     "labelIDs": "Labels",
     "labels": "Labels",
     "isPublic": "Grunddaten",
+    "keepLabelParticipantsInSync": "Labels",
+    "participants": "Teilnehmer",
 }
 SECTION_ORDER = [
     "Grunddaten",
@@ -36,6 +38,7 @@ SECTION_ORDER = [
     "Benachrichtigungen",
     "Erinnerung",
     "Labels",
+    "Teilnehmer",
     "Weitere Felder",
 ]
 DEFAULT_SECTION = "Weitere Felder"
