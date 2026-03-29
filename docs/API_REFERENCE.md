@@ -788,7 +788,7 @@ Container class `AppConfig`.
 ### Functions
 
 - `_format_datetime(dt, tz_name)` — Internal helper for `format_datetime`.
-- `export_appointments(appointments, output_path, timezone='Europe/Berlin')` — Execute `export_appointments`.
+- `export_appointments(appointments, output_path, timezone='Europe/Berlin', user_name_resolver=None)` — Execute `export_appointments`.
 
 ## framework/importer_token.py
 
@@ -1360,12 +1360,13 @@ Container class `_ClientStub`.
 
 ### Functions
 
-- `_make_appt(id_=1, name='Test', description='desc [GA-IMPORTER:aabbccdd|20260101120000|abcd]')` — Internal helper for `make_appt`.
-- `test_export_creates_xlsx_with_13_columns(tmp_path)` — Test `export_creates_xlsx_with_13_columns` behavior.
+- `_make_appt(id_=1, name='Test', description='desc [GA-IMPORTER:aabbccdd|20260101120000|abcd]', participants=None)` — Internal helper for `make_appt`.
+- `test_export_creates_xlsx_with_16_columns(tmp_path)` — Test `export_creates_xlsx_with_16_columns` behavior.
 - `test_export_contains_groupalarm_id_and_token(tmp_path)` — Test `export_contains_groupalarm_id_and_token` behavior.
 - `test_export_empty_list_raises(tmp_path)` — Test `export_empty_list_raises` behavior.
 - `test_export_multiple_appointments(tmp_path)` — Test `export_multiple_appointments` behavior.
 - `test_export_appointment_without_token(tmp_path)` — Test `export_appointment_without_token` behavior.
+- `test_export_feedback_columns_use_names_comments_and_linebreaks(tmp_path)` — Test `export_feedback_columns_use_names_comments_and_linebreaks` behavior.
 
 ## tests/test_filter_bar.py
 

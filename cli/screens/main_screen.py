@@ -688,7 +688,15 @@ class MainScreen(Screen):
             tz = "Europe/Berlin"
             if self._config:
                 tz = self._config.timezone
-            export_appointments(appointments, output_path, timezone=tz)
+            user_name_resolver = None
+            if self._user_service:
+                user_name_resolver = self._user_service.get_display_name
+            export_appointments(
+                appointments,
+                output_path,
+                timezone=tz,
+                user_name_resolver=user_name_resolver,
+            )
             self.app.notify(f"Exported {len(appointments)} appointments to {output_path}", severity="information")
         except Exception as exc:
             logger.error("Export failed: %s", exc)

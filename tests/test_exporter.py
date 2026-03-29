@@ -1,13 +1,17 @@
 """Tests for exporter module — export appointments to .xlsx."""
 import pytest
 from datetime import datetime, timezone
-from pathlib import Path
 
 from framework.appointment import Appointment
 from framework.exporter import export_appointments, COLUMNS
 
 
-def _make_appt(id_=1, name="Test", description="desc [GA-IMPORTER:aabbccdd|20260101120000|abcd]"):
+def _make_appt(
+    id_=1,
+    name="Test",
+    description="desc [GA-IMPORTER:aabbccdd|20260101120000|abcd]",
+    participants=None,
+):
     """Internal helper for `make_appt`."""
     return Appointment(
         name=name,
@@ -19,11 +23,12 @@ def _make_appt(id_=1, name="Test", description="desc [GA-IMPORTER:aabbccdd|20260
         labelIDs=[1, 2],
         isPublic=True,
         timezone="Europe/Berlin",
+        participants=participants or [],
     )
 
 
-def test_export_creates_xlsx_with_13_columns(tmp_path):
-    """Test `export_creates_xlsx_with_13_columns` behavior."""
+def test_export_creates_xlsx_with_16_columns(tmp_path):
+    """Test `export_creates_xlsx_with_16_columns` behavior."""
     path = tmp_path / "test.xlsx"
     result = export_appointments([_make_appt()], path)
     assert result == path
@@ -34,7 +39,7 @@ def test_export_creates_xlsx_with_13_columns(tmp_path):
     ws = wb.active
     headers = [cell.value for cell in ws[1]]
     assert headers == COLUMNS
-    assert len(headers) == 13
+    assert len(headers) == 16
 
 
 def test_export_contains_groupalarm_id_and_token(tmp_path):
@@ -84,3 +89,27 @@ def test_export_appointment_without_token(tmp_path):
     row = [cell.value for cell in ws[2]]
     # ga_importer_token should be empty/None (openpyxl stores "" as None)
     assert not row[12]
+
+
+def test_export_feedback_columns_use_names_comments_and_linebreaks(tmp_path):
+    """Test `export_feedback_columns_use_names_comments_and_linebreaks` behavior."""
+    path = tmp_path / "test.xlsx"
+    appt = _make_appt(
+        participants=[
+            {"userID": 10, "feedback": 1, "feedbackMessage": "komme spaeter"},
+            {"userID": 11, "feedback": 1},
+            {"userID": 12, "feedback": 2, "feedbackMessage": "verhindert"},
+            {"userID": 13, "feedback": 0},
+        ]
+    )
+    name_map = {10: "Alice Example", 11: "Bob Example", 12: "Cara Example", 13: "Dan Example"}
+    export_appointments([appt], path, user_name_resolver=lambda uid: name_map[uid])
+
+    from openpyxl import load_workbook
+    wb = load_workbook(path)
+    ws = wb.active
+    row = [cell.value for cell in ws[2]]
+
+    assert row[13] == "Alice Example (komme spaeter)\nBob Example"
+    assert row[14] == "Cara Example (verhindert)"
+    assert row[15] == "Dan Example"
