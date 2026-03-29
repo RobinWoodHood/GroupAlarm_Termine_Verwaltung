@@ -21,6 +21,8 @@ from cli.widgets.confirmation_dialog import (
     RecurrenceStrategyDialog,
 )
 from cli.widgets.state import FilterControls, NavigationState, LabelReference
+from cli.screens.import_preview_screen import ImportFileDialog, ImportPreviewScreen
+from cli.services.import_service import parse_excel
 from framework.utils import DEFAULT_DISPLAY_TZ, format_de_datetime
 
 logger = logging.getLogger(__name__)
@@ -94,6 +96,10 @@ class MainScreen(Screen):
         if self._config and self._config.default_label_ids:
             self._filter_controls.selected_label_ids.update(self._config.default_label_ids)
         self.navigation_state = NavigationState()
+        self._startup_welcome_enabled = True
+        if self._config is not None:
+            self._startup_welcome_enabled = self._config.show_startup_welcome
+        self._startup_welcome_active = False
         self._display_timezone = (
             self._config.timezone if self._config and self._config.timezone else DEFAULT_DISPLAY_TZ
         )
@@ -125,9 +131,10 @@ class MainScreen(Screen):
         if self._user_service:
             detail.set_user_service(self._user_service)
         self._load_appointments()
-        # Show empty-list hint if no appointments
-        if not self._appt_service.appointments:
+        has_appointments = bool(self._appt_service.appointments)
+        if self._startup_welcome_enabled or not has_appointments:
             detail.show_help()
+        self._startup_welcome_active = self._startup_welcome_enabled and has_appointments
         self._focus_list_panel()
         self._validate_display_timezone()
 
@@ -270,6 +277,8 @@ class MainScreen(Screen):
         # Don't update preview while in edit mode
         if detail.edit_mode:
             return
+        if self._startup_welcome_active:
+            return
         appt = self._appt_service.get_by_id(event.appointment_id)
         if appt:
             self._selected_appointment_id = event.appointment_id
@@ -277,6 +286,7 @@ class MainScreen(Screen):
             detail.show_appointment(appt, self._label_service, display_tz=display_tz)
 
     def _select_appointment(self, appt_id: int) -> None:
+        self._startup_welcome_active = False
         self._selected_appointment_id = appt_id
         self.navigation_state.set_list_cursor(appt_id)
         appt = self._appt_service.get_by_id(appt_id)
@@ -648,6 +658,55 @@ class MainScreen(Screen):
         except Exception as exc:
             logger.error("Export failed: %s", exc)
             self.app.notify(f"Export failed: {exc}", severity="error")
+
+    def action_import(self) -> None:
+        """Open import dialog, parse file, and push preview screen."""
+        logger.info("Import action triggered from main screen")
+
+        def _on_import_path(path: str | None) -> None:
+            if not path:
+                logger.info("Import dialog cancelled")
+                return
+
+            try:
+                import_cfg = self._config.import_config if self._config else None
+                org_id = self._appt_service._organization_id
+                tz_name = self._config.timezone if self._config else "Europe/Berlin"
+                logger.info("Parsing import file: %s", path)
+                session = parse_excel(
+                    file_path=path,
+                    import_config=import_cfg,
+                    organization_id=org_id,
+                    timezone=tz_name,
+                )
+            except Exception as exc:
+                logger.exception("Import parse failed for file '%s'", path)
+                self.app.notify(f"Import failed: {exc}", severity="error")
+                return
+
+            if not session.appointments:
+                logger.warning("Import parse produced no appointments: %s", path)
+                self.app.notify("No appointments found in file.", severity="warning")
+                return
+
+            logger.info(
+                "Opening import preview: appointments=%d skipped=%d mapping=%s",
+                len(session.appointments),
+                len(session.skipped_rows),
+                session.column_mapping_used,
+            )
+
+            self.app.push_screen(
+                ImportPreviewScreen(
+                    import_session=session,
+                    client=self._appt_service._client,
+                    label_service=self._label_service,
+                    config=self._config,
+                    dry_run=self._dry_run,
+                )
+            )
+
+        self.app.push_screen(ImportFileDialog(), _on_import_path)
 
     # --- Navigation & Filter ---
 

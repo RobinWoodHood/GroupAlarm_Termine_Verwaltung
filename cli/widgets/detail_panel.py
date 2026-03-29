@@ -430,6 +430,16 @@ class DetailPanel(Widget):
         self._label_directory: List[LabelReference] = []
         self._import_token: Optional[str] = None  # GA-IMPORTER token stripped from description
 
+    def _welcome_message(self) -> str:
+        """Return the canonical welcome text for empty detail state."""
+        return (
+            "[b]Willkommen zur Terminverwaltung fuer GroupAlarm.[/b]\n\n"
+            "Entwickler: RobinWoodHood mit GitHub Copilot\n"
+            "GitHub: [link=\"https://github.com/RobinWoodHood/GroupAlarm_Termine_Verwaltung\"]"
+            "Repo oeffnen[/link]\n\n"
+            "Druecke [b]F1[/b] fuer Hilfe."
+        )
+
     @property
     def edit_mode(self) -> bool:
         return self._edit_mode
@@ -452,23 +462,7 @@ class DetailPanel(Widget):
         yield arrow
         with VerticalScroll(id="detail-scroll"):
             yield Static(
-                "[b]GroupAlarm TUI[/b]\n\n"
-                "Select an appointment from the list to view details.\n\n"
-                "[dim]Key bindings:[/dim]\n"
-                "  [b]↑/↓[/b]     Navigate list\n"
-                "  [b]Enter[/b]   Select appointment\n"
-                "  [b]e[/b]       Edit mode\n"
-                "  [b]Ctrl+T[/b]  Focus date filter\n"
-                "  [b]Ctrl+F[/b]  Search\n"
-                "  [b]n[/b]       New appointment\n"
-                "  [b]d[/b]       Delete selected\n"
-                "  [b]x[/b]       Export to Excel\n"
-                "  [b]i[/b]       Add GA-IMPORTER tokens\n"
-                "  [b]Ctrl+S[/b]  Save changes\n"
-                "  [b]Esc[/b]     Cancel edit\n"
-                "  [b]F1[/b]      Help\n"
-                "  [b]Ctrl +/−[/b] Zoom in/out (terminal)\n"
-                "  [b]q[/b]       Quit",
+                self._welcome_message(),
                 classes="help-text",
                 id="detail-content",
             )
@@ -1063,25 +1057,7 @@ class DetailPanel(Widget):
 
     def _show_help_content(self, content: Static) -> None:
         """Write help text into the given Static widget."""
-        content.update(
-            "[b]GroupAlarm TUI[/b]\n\n"
-            "Select an appointment from the list to view details.\n\n"
-            "[dim]Key bindings:[/dim]\n"
-            "  [b]↑/↓[/b]     Navigate list\n"
-            "  [b]Enter[/b]   Select appointment\n"
-            "  [b]e[/b]       Edit mode\n"
-            "  [b]Ctrl+T[/b]  Focus date filter\n"
-            "  [b]Ctrl+F[/b]  Search\n"
-            "  [b]n[/b]       New appointment\n"
-            "  [b]d[/b]       Delete selected\n"
-            "  [b]x[/b]       Export to Excel\n"
-            "  [b]i[/b]       Add GA-IMPORTER tokens\n"
-            "  [b]Ctrl+S[/b]  Save changes\n"
-            "  [b]Esc[/b]     Cancel edit\n"
-            "  [b]F1[/b]      Help\n"
-            "  [b]Ctrl +/−[/b] Zoom in/out (terminal)\n"
-            "  [b]q[/b]       Quit"
-        )
+        content.update(self._welcome_message())
 
     def show_help(self) -> None:
         """Display help text when no appointment is selected."""

@@ -2,9 +2,9 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional
+from typing import Iterable, Optional
 
-from textual.app import App, ComposeResult
+from textual.app import App, SystemCommand
 from textual.binding import Binding
 
 from framework.client import GroupAlarmClient
@@ -27,6 +27,8 @@ class GroupAlarmApp(App):
         Binding("q", "quit", "Quit", show=True),
         Binding("ctrl+f", "search", "Search", show=True, priority=True),
         Binding("ctrl+t", "focus_start_filter", "Zeitfilter", show=True, priority=True),
+        Binding("ctrl+o", "import", "Import", show=True),
+        Binding("ctrl+p", "command_palette", "Command Palette", show=False),
         Binding("n", "new_appointment", "New", show=True),
         Binding("d", "delete_appointment", "Delete", show=True),
         Binding("x", "export", "Export", show=True),
@@ -95,6 +97,33 @@ class GroupAlarmApp(App):
             )
         )
 
+    def get_system_commands(self, screen) -> Iterable[SystemCommand]:
+        """Expose custom commands in Ctrl+P command palette."""
+        yield from super().get_system_commands(screen)
+        state = "aktiviert" if self._config.show_startup_welcome else "deaktiviert"
+        yield SystemCommand(
+            "Willkommensseite beim Start umschalten",
+            f"Aktuell: {state}. Speichert in .groupalarm.toml.",
+            self.action_toggle_startup_welcome,
+            discover=True,
+        )
+
+    def action_toggle_startup_welcome(self) -> None:
+        """Toggle startup welcome behavior and persist config."""
+        self._config.show_startup_welcome = not self._config.show_startup_welcome
+        try:
+            save_config(self._config)
+        except Exception as exc:
+            logger.error("Failed to persist startup welcome toggle: %s", exc)
+            self.notify(f"Konnte Config nicht speichern: {exc}", severity="error")
+            return
+
+        state = "aktiviert" if self._config.show_startup_welcome else "deaktiviert"
+        self.notify(
+            f"Willkommensseite beim Start: {state} (gilt beim naechsten Start).",
+            severity="information",
+        )
+
     def action_focus_start_filter(self) -> None:
         screen = self.screen
         if hasattr(screen, "action_focus_start_filter"):
@@ -124,6 +153,11 @@ class GroupAlarmApp(App):
         screen = self.screen
         if hasattr(screen, "action_add_importer_tokens"):
             screen.action_add_importer_tokens()
+
+    def action_import(self) -> None:
+        screen = self.screen
+        if hasattr(screen, "action_import"):
+            screen.action_import()
 
     def action_help(self) -> None:
         from cli.screens.help_screen import HelpScreen

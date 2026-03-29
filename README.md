@@ -10,9 +10,11 @@ Eine interaktive **Terminal-Oberfläche (TUI)** zum Verwalten von GroupAlarm-Ter
 - [Konfiguration](#konfiguration)
 - [TUI starten](#tui-starten)
 - [Bedienung & Tastenkürzel](#bedienung--tastenkürzel)
+- [Excel-Import (Tier 1 & Tier 2)](#excel-import-tier-1--tier-2)
 - [Dry-Run-Modus](#dry-run-modus)
 - [Tests](#tests)
 - [API-Referenz](#api-referenz)
+- [Rechtliches & Lizenzen](#rechtliches--lizenzen)
 
 ---
 
@@ -45,6 +47,7 @@ Passe mindestens `organization_id` an:
 [general]
 organization_id = 12345       # Deine GroupAlarm Organisations-ID
 timezone = "Europe/Berlin"    # IANA-Zeitzone für Datumsanzeige
+show_startup_welcome = true   # Detail-Panel startet mit Willkommensseite
 
 [defaults]
 date_range_days = 30                # Standardzeitraum: Termine der nächsten N Tage
@@ -84,7 +87,7 @@ Optionale Argumente:
 
 | Taste | Aktion |
 |---|---|
-| ↑ / ↓ | Termin in der Liste auswählen (Detail-Vorschau aktualisiert sich live) |
+| ↑ / ↓ | Termin in der Liste auswählen (nach Auswahl per Enter aktualisiert sich die Detailansicht) |
 | Enter / → | Fokus auf Detail-Panel wechseln |
 | ← | Zurück zur Liste (nur im Lesemodus; warnt bei ungespeicherten Änderungen) |
 | Ctrl+F | Textsuche in Terminen |
@@ -100,6 +103,8 @@ Optionale Argumente:
 | N | Neuen Termin erstellen |
 | D | Ausgewählten Termin löschen |
 | X | Gefilterte Liste als Excel exportieren |
+| Ctrl+O | Termine aus Excel importieren |
+| Ctrl+P | Textual Command Palette (z. B. Theme-Wechsel, Startup-Willkommensseite umschalten) |
 | R | Terminliste vom Server neu laden |
 | F1 | Hilfe-Overlay anzeigen |
 | Q | Beenden (warnt bei ungespeicherten Änderungen) |
@@ -118,6 +123,41 @@ Optionale Argumente:
 | Taste | Aktion |
 |---|---|
 | Ctrl + / Ctrl − | Terminal-Zoom vergrößern / verkleinern |
+
+---
+
+## Excel-Import (Tier 1 & Tier 2)
+
+Der Import wird in der TUI mit `Ctrl+O` gestartet.
+
+### Tier 1 (Standard)
+
+- Nutzt die eingebaute Standard-Spaltenzuordnung.
+- Funktioniert ohne zusätzliche Konfiguration.
+
+### Tier 2 (eigene Mapping-Logik)
+
+Für abweichende Excel-Strukturen kann ein eigenes Mapping-Modul in der Konfiguration gesetzt werden:
+
+```toml
+[import]
+mapping_file = "import.example.py"
+# Optional:
+# sheet_name = "Tabelle1"
+```
+
+Hinweise zu `mapping_file`:
+
+- Pfad relativ zum Projektverzeichnis oder als absoluter Pfad.
+- Das Modul muss ein `mapping`-Dict bereitstellen; optional sind `defaults`.
+- In der Import-Vorschau wird der verwendete Modus angezeigt (`Tier 1` oder `Tier 2`).
+
+
+Automatisierte Tests für die Import-Logik:
+
+```bash
+pytest -q tests/test_import_service.py tests/test_import_config.py
+```
 
 ---
 
@@ -149,3 +189,15 @@ Generierung:
 ```bash
 python scripts/generate_api_docs.py --root . --output docs/API_REFERENCE.md
 ```
+
+---
+
+## Rechtliches & Lizenzen
+
+- Projektlizenz: MIT, siehe `LICENSE`.
+- Drittanbieterhinweise: siehe `THIRD_PARTY_NOTICES.md`.
+- Keine Gewährleistung: Die Software wird ohne Zusicherung bereitgestellt (siehe MIT-Lizenztext).
+
+### GroupAlarm API-Dokumentation
+
+Die Dateien unter `api-docs/` (OpenAPI-Spezifikationen) dienen der Interoperabilität mit GroupAlarm. Sie stammen nicht aus diesem Projekt und sind nicht automatisch von der MIT-Lizenz dieses Repositories umfasst. Nutzung und Weitergabe richten sich nach den Bedingungen des jeweiligen Rechteinhabers (GroupAlarm).

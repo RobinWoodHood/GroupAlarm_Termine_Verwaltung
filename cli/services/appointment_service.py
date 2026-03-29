@@ -170,6 +170,11 @@ class AppointmentService:
 
     def create(self, appt: Appointment) -> dict:
         """Create a new appointment via the client."""
+        from framework.importer_token import ImporterToken
+
+        token_added = ImporterToken.ensure_token(appt)
+        if token_added:
+            logger.info("Added GA-IMPORTER token before create for appointment '%s'", appt.name)
         result = self._client.create_appointment(appt)
         logger.info("Created appointment: %s", appt.name)
         return result

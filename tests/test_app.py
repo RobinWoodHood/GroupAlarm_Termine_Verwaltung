@@ -1,4 +1,5 @@
 """Textual pilot tests for the GroupAlarm TUI app (US1: Browse & Filter)."""
+import cli.app as app_module
 import pytest
 from datetime import datetime, timezone
 from unittest.mock import MagicMock
@@ -69,10 +70,14 @@ def _make_mock_client():
     return client
 
 
-def _make_app(client=None, dry_run=False):
+def _make_app(client=None, dry_run=False, show_startup_welcome=True):
     if client is None:
         client = _make_mock_client()
-    config = AppConfig(organization_id=100, date_range_days=30)
+    config = AppConfig(
+        organization_id=100,
+        date_range_days=30,
+        show_startup_welcome=show_startup_welcome,
+    )
     return GroupAlarmApp(client=client, config=config, org_id=100, dry_run=dry_run)
 
 
@@ -96,6 +101,48 @@ async def test_app_startup_calls_list_labels():
     async with app.run_test(size=(120, 40)) as pilot:
         await pilot.pause()
         client.list_labels.assert_called_once_with(100)
+
+
+@pytest.mark.asyncio
+async def test_startup_welcome_stays_visible_until_explicit_selection():
+    app = _make_app(show_startup_welcome=True)
+    async with app.run_test(size=(120, 40)) as pilot:
+        await pilot.pause()
+        from cli.widgets.detail_panel import DetailPanel
+
+        detail = app.screen.query_one("#detail-panel", DetailPanel)
+        assert detail.current_appointment is None
+
+
+@pytest.mark.asyncio
+async def test_startup_welcome_disabled_keeps_live_preview_behavior():
+    app = _make_app(show_startup_welcome=False)
+    async with app.run_test(size=(120, 40)) as pilot:
+        await pilot.pause()
+        from cli.widgets.detail_panel import DetailPanel
+
+        detail = app.screen.query_one("#detail-panel", DetailPanel)
+        assert detail.current_appointment is not None
+
+
+@pytest.mark.asyncio
+async def test_command_palette_toggle_persists_startup_welcome(monkeypatch):
+    app = _make_app(show_startup_welcome=True)
+    saved_values: list[bool] = []
+
+    def _fake_save(config, path=None):
+        saved_values.append(config.show_startup_welcome)
+
+    monkeypatch.setattr(app_module, "save_config", _fake_save)
+
+    async with app.run_test(size=(120, 40)) as pilot:
+        await pilot.pause()
+        titles = [cmd.title for cmd in app.get_system_commands(app.screen)]
+        assert "Willkommensseite beim Start umschalten" in titles
+        app.action_toggle_startup_welcome()
+        await pilot.pause()
+        assert app._config.show_startup_welcome is False
+        assert saved_values == [False]
 
 
 @pytest.mark.asyncio

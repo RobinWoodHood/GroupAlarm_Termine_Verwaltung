@@ -28,7 +28,10 @@ class ExcelImporter:
 
     def _load(self):
         if self._df is None:
-            self._df = pd.read_excel(self.filename, sheet_name=self.sheet_name, header=0)
+            # pandas returns a dict of DataFrames for sheet_name=None.
+            # For this importer, None means "first sheet".
+            sheet = 0 if self.sheet_name is None else self.sheet_name
+            self._df = pd.read_excel(self.filename, sheet_name=sheet, header=0)
         return self._df
 
     def rows(self) -> Iterator[pd.Series]:
