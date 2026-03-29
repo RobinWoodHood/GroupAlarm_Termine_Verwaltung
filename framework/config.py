@@ -20,6 +20,7 @@ class ImportConfig:
 
 @dataclass
 class AppConfig:
+    """Container class `AppConfig`."""
     organization_id: Optional[int] = None
     timezone: str = "Europe/Berlin"
     show_startup_welcome: bool = True
@@ -30,6 +31,7 @@ class AppConfig:
 
 
 def load_config(path: Path = Path(".groupalarm.toml")) -> AppConfig:
+    """Execute `load_config`."""
     if not path.exists():
         return AppConfig()
     try:
@@ -61,6 +63,7 @@ def load_config(path: Path = Path(".groupalarm.toml")) -> AppConfig:
 
 
 def save_config(config: AppConfig, path: Path = Path(".groupalarm.toml")) -> None:
+    """Execute `save_config`."""
     data: dict[str, dict[str, object]] = {
         "general": {
             "organization_id": config.organization_id,

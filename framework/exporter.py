@@ -29,6 +29,7 @@ COLUMNS = [
 
 
 def _format_datetime(dt, tz_name: str) -> str:
+    """Internal helper for `format_datetime`."""
     if dt is None:
         return ""
     from dateutil import tz as dateutil_tz
@@ -43,6 +44,7 @@ def export_appointments(
     output_path: Path,
     timezone: str = "Europe/Berlin",
 ) -> Path:
+    """Execute `export_appointments`."""
     if not appointments:
         raise ValueError("No appointments to export")
 

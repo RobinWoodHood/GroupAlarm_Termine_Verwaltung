@@ -81,6 +81,7 @@ class MainScreen(Screen):
         dry_run: bool = False,
         **kwargs,
     ) -> None:
+        """Initialize the MainScreen instance."""
         super().__init__(**kwargs)
         self._appt_service = appointment_service
         self._label_service = label_service
@@ -105,6 +106,7 @@ class MainScreen(Screen):
         )
 
     def compose(self) -> ComposeResult:
+        """Execute `compose`."""
         yield Static("⚠ DRY-RUN MODE — No changes will be saved to the server", id="dry-run-banner")
         yield LoadingIndicator(id="loading-indicator")
         with Horizontal(id="main-content"):
@@ -122,6 +124,7 @@ class MainScreen(Screen):
             yield DetailPanel(id="detail-panel")
 
     def on_mount(self) -> None:
+        """Handle the `mount` event callback."""
         if self._dry_run:
             banner = self.query_one("#dry-run-banner")
             banner.add_class("visible")
@@ -139,6 +142,7 @@ class MainScreen(Screen):
         self._validate_display_timezone()
 
     def _load_appointments(self) -> None:
+        """Internal helper for `load_appointments`."""
         try:
             self._appt_service.load()
         except Exception as exc:
@@ -175,14 +179,17 @@ class MainScreen(Screen):
         self.query_one("#loading-indicator").remove_class("visible")
 
     def _build_label_directory(self) -> list[LabelReference]:
+        """Internal helper for `build_label_directory`."""
         if self._label_service:
             return self._label_service.get_directory()
         return []
 
     def _filter_bar(self) -> FilterBar:
+        """Internal helper for `filter_bar`."""
         return self.query_one("#filter-bar", FilterBar)
 
     def _focus_list_panel(self) -> None:
+        """Internal helper for `focus_list_panel`."""
         try:
             table = self.query_one("#appt-table", DataTable)
         except Exception:
@@ -193,6 +200,7 @@ class MainScreen(Screen):
         self._update_panel_focus_states("list")
 
     def _focus_detail_panel(self) -> None:
+        """Internal helper for `focus_detail_panel`."""
         detail = self.query_one("#detail-panel", DetailPanel)
         detail.focus_content()
         self.navigation_state.set_active_panel("detail", "#detail-panel")
@@ -200,6 +208,7 @@ class MainScreen(Screen):
         self._update_panel_focus_states("detail")
 
     def _update_panel_focus_states(self, target: Literal["list", "detail", "filter"]) -> None:
+        """Internal helper for `update_panel_focus_states`."""
         try:
             appt_list = self.query_one("#appt-list", AppointmentList)
             appt_list.set_focus_state(target == "list")
@@ -212,6 +221,7 @@ class MainScreen(Screen):
             pass
 
     def on_filter_changed(self, event: FilterChanged) -> None:
+        """Handle the `filter_changed` event callback."""
         filter_bar = self.query_one("#filter-bar", FilterBar)
         search = filter_bar.search_text
         label_ids = filter_bar.selected_label_ids
@@ -261,6 +271,7 @@ class MainScreen(Screen):
         appt_list.update_appointments(self._appt_service.appointments)
 
     def on_appointment_selected(self, event: AppointmentSelected) -> None:
+        """Handle the `appointment_selected` event callback."""
         detail = self.query_one("#detail-panel", DetailPanel)
         # Check for unsaved changes before switching
         if detail.dirty:
@@ -273,6 +284,7 @@ class MainScreen(Screen):
         self._select_appointment(event.appointment_id)
 
     def on_appointment_highlighted(self, event: AppointmentHighlighted) -> None:
+        """Handle the `appointment_highlighted` event callback."""
         detail = self.query_one("#detail-panel", DetailPanel)
         # Don't update preview while in edit mode
         if detail.edit_mode:
@@ -286,6 +298,7 @@ class MainScreen(Screen):
             detail.show_appointment(appt, self._label_service, display_tz=display_tz)
 
     def _select_appointment(self, appt_id: int) -> None:
+        """Internal helper for `select_appointment`."""
         self._startup_welcome_active = False
         self._selected_appointment_id = appt_id
         self.navigation_state.set_list_cursor(appt_id)
@@ -298,6 +311,7 @@ class MainScreen(Screen):
             self._focus_detail_panel()
 
     def _handle_unsaved_on_selection(self, result: str) -> None:
+        """Internal helper for `handle_unsaved_on_selection`."""
         if result == "save":
             self._do_save(then_select=getattr(self, "_pending_selection_id", None))
         elif result == "discard":
@@ -309,6 +323,7 @@ class MainScreen(Screen):
         # "cancel" — do nothing, stay on current
 
     def _parse_filter_date(self, value: str, field_name: str) -> tuple[bool, date | None, bool]:
+        """Internal helper for `parse_filter_date`."""
         text = (value or "").strip()
         if not text:
             return True, None, True
@@ -329,6 +344,7 @@ class MainScreen(Screen):
         return True, parsed, True
 
     def _normalize_date_text(self, text: str) -> str | None:
+        """Internal helper for `normalize_date_text`."""
         parts = text.split(".")
         if len(parts) != 3 or not all(parts):
             return None
@@ -338,6 +354,7 @@ class MainScreen(Screen):
         return f"{day.zfill(2)}.{month.zfill(2)}.{year}"
 
     def _reload_appointments(self, start_date: date | None, end_date: date | None) -> bool:
+        """Internal helper for `reload_appointments`."""
         start_dt = self._date_to_datetime(start_date)
         end_dt = self._date_to_datetime(end_date, clamp_end=True)
         try:
@@ -352,6 +369,7 @@ class MainScreen(Screen):
         return True
 
     def _update_filter_labels(self) -> None:
+        """Internal helper for `update_filter_labels`."""
         try:
             filter_bar = self.query_one("#filter-bar", FilterBar)
         except Exception:
@@ -375,6 +393,7 @@ class MainScreen(Screen):
         filter_bar.update_labels(enriched)
 
     def _date_to_datetime(self, value: date | None, clamp_end: bool = False) -> datetime | None:
+        """Internal helper for `date_to_datetime`."""
         if value is None:
             return None
         base = datetime(value.year, value.month, value.day, tzinfo=timezone.utc)
@@ -385,6 +404,7 @@ class MainScreen(Screen):
     # --- Edit Mode (US2) ---
 
     def action_edit_mode(self) -> None:
+        """Handle the `edit_mode` action."""
         if self._loading:
             return
         detail = self.query_one("#detail-panel", DetailPanel)
@@ -395,6 +415,7 @@ class MainScreen(Screen):
             self._update_panel_focus_states("detail")
 
     def action_save(self) -> None:
+        """Handle the `save` action."""
         if self._loading:
             return
         detail = self.query_one("#detail-panel", DetailPanel)
@@ -403,6 +424,7 @@ class MainScreen(Screen):
         self._do_save()
 
     def _do_save(self, then_select: int | None = None) -> None:
+        """Internal helper for `do_save`."""
         detail = self.query_one("#detail-panel", DetailPanel)
         appt = detail.current_appointment
         if not appt:
@@ -459,6 +481,7 @@ class MainScreen(Screen):
                 self.app.push_screen(dialog, lambda ok: self._on_update_confirmed(ok, "all", then_select))
 
     def _on_strategy_selected_for_update(self, strategy: str, old_values: dict, new_values: dict, then_select: int | None) -> None:
+        """Handle the internal `strategy_selected_for_update` callback."""
         if not strategy:
             return  # cancelled
         detail = self.query_one("#detail-panel", DetailPanel)
@@ -473,6 +496,7 @@ class MainScreen(Screen):
         self.app.push_screen(dialog, lambda ok: self._on_update_confirmed(ok, strategy, then_select))
 
     def _on_update_confirmed(self, confirmed: bool, strategy: str, then_select: int | None) -> None:
+        """Handle the internal `update_confirmed` callback."""
         if not confirmed:
             return
         detail = self.query_one("#detail-panel", DetailPanel)
@@ -496,6 +520,7 @@ class MainScreen(Screen):
             self._unlock_ui()
 
     def _on_create_confirmed(self, confirmed: bool, then_select: int | None) -> None:
+        """Handle the internal `create_confirmed` callback."""
         if not confirmed:
             return
         detail = self.query_one("#detail-panel", DetailPanel)
@@ -517,6 +542,7 @@ class MainScreen(Screen):
             self._unlock_ui()
 
     def action_cancel_edit(self) -> None:
+        """Handle the `cancel_edit` action."""
         detail = self.query_one("#detail-panel", DetailPanel)
         if detail.edit_mode:
             if detail.dirty:
@@ -528,6 +554,7 @@ class MainScreen(Screen):
                 detail.discard_changes()
 
     def _handle_unsaved_on_cancel(self, result: str) -> None:
+        """Internal helper for `handle_unsaved_on_cancel`."""
         if result == "save":
             self._do_save()
         elif result == "discard":
@@ -538,6 +565,7 @@ class MainScreen(Screen):
     # --- New Appointment (US4) ---
 
     def action_new_appointment(self) -> None:
+        """Handle the `new_appointment` action."""
         if self._loading:
             return
         detail = self.query_one("#detail-panel", DetailPanel)
@@ -550,6 +578,7 @@ class MainScreen(Screen):
         self._start_create()
 
     def _handle_unsaved_then_new(self, result: str) -> None:
+        """Internal helper for `handle_unsaved_then_new`."""
         if result == "save":
             self._do_save()
         elif result == "discard":
@@ -558,6 +587,7 @@ class MainScreen(Screen):
             self._start_create()
 
     def _start_create(self) -> None:
+        """Internal helper for `start_create`."""
         detail = self.query_one("#detail-panel", DetailPanel)
         defaults = {
             "organization_id": self._appt_service._organization_id,
@@ -572,6 +602,7 @@ class MainScreen(Screen):
     # --- Delete Appointment (US5) ---
 
     def action_delete_appointment(self) -> None:
+        """Handle the `delete_appointment` action."""
         if self._loading:
             return
         if not self._selected_appointment_id:
@@ -591,11 +622,13 @@ class MainScreen(Screen):
             self._show_delete_confirmation(appt, "all")
 
     def _on_delete_strategy(self, strategy: str, appt) -> None:
+        """Handle the internal `delete_strategy` callback."""
         if not strategy:
             return  # cancelled
         self._show_delete_confirmation(appt, strategy)
 
     def _show_delete_confirmation(self, appt, strategy: str) -> None:
+        """Internal helper for `show_delete_confirmation`."""
         body = ConfirmationDialog.build_delete_summary(
             appt.name,
             appt.startDate.strftime("%Y-%m-%d %H:%M"),
@@ -610,6 +643,7 @@ class MainScreen(Screen):
         self.app.push_screen(dialog, lambda ok: self._on_delete_confirmed(ok, appt, strategy))
 
     def _on_delete_confirmed(self, confirmed: bool, appt, strategy: str) -> None:
+        """Handle the internal `delete_confirmed` callback."""
         if not confirmed:
             return
         self._lock_ui()
@@ -630,6 +664,7 @@ class MainScreen(Screen):
     # --- Export (US3) ---
 
     def action_export(self) -> None:
+        """Handle the `export` action."""
         if self._loading:
             return
         appointments = self._appt_service.appointments
@@ -664,6 +699,7 @@ class MainScreen(Screen):
         logger.info("Import action triggered from main screen")
 
         def _on_import_path(path: str | None) -> None:
+            """Handle the internal `import_path` callback."""
             if not path:
                 logger.info("Import dialog cancelled")
                 return
@@ -745,6 +781,7 @@ class MainScreen(Screen):
         self.app.push_screen(dialog, self._on_add_tokens_confirmed)
 
     def _on_add_tokens_confirmed(self, confirmed: bool) -> None:
+        """Handle the internal `add_tokens_confirmed` callback."""
         if not confirmed:
             return
         self._lock_ui()
@@ -766,18 +803,21 @@ class MainScreen(Screen):
             self._unlock_ui()
 
     def action_search(self) -> None:
+        """Handle the `search` action."""
         filter_bar = self.query_one("#filter-bar", FilterBar)
         self.navigation_state.set_active_panel("filter", "#search-input")
         filter_bar.focus_search()
         self._update_panel_focus_states("filter")
 
     def action_focus_start_filter(self) -> None:
+        """Handle the `focus_start_filter` action."""
         filter_bar = self.query_one("#filter-bar", FilterBar)
         self.navigation_state.set_active_panel("filter", "#start-date")
         filter_bar.focus_start_date()
         self._update_panel_focus_states("filter")
 
     def action_focus_list_panel(self) -> None:
+        """Handle the `focus_list_panel` action."""
         detail = self.query_one("#detail-panel", DetailPanel)
         # In edit mode, Left/Right are reserved for text cursor navigation
         if detail.edit_mode:
@@ -791,6 +831,7 @@ class MainScreen(Screen):
         self._focus_list_panel()
 
     def _handle_unsaved_on_focus_list(self, result: str) -> None:
+        """Internal helper for `handle_unsaved_on_focus_list`."""
         if result == "save":
             self._do_save()
         elif result == "discard":
@@ -800,6 +841,7 @@ class MainScreen(Screen):
         # "cancel" — stay on detail
 
     def action_focus_detail_panel(self) -> None:
+        """Handle the `focus_detail_panel` action."""
         detail = self.query_one("#detail-panel", DetailPanel)
         # In edit mode, Left/Right are reserved for text cursor navigation
         if detail.edit_mode:
@@ -807,14 +849,17 @@ class MainScreen(Screen):
         self._focus_detail_panel()
 
     def action_toggle_sort(self) -> None:
+        """Handle the `toggle_sort` action."""
         self._appt_service.toggle_sort()
         appt_list = self.query_one("#appt-list", AppointmentList)
         appt_list.update_appointments(self._appt_service.appointments)
 
     def action_refresh(self) -> None:
+        """Handle the `refresh` action."""
         self._load_appointments()
 
     def refresh_list(self) -> None:
+        """Execute `refresh_list`."""
         self._load_appointments()
 
     def _check_dirty_before_quit(self) -> None:
@@ -829,6 +874,7 @@ class MainScreen(Screen):
             self.app.exit()
 
     def _handle_unsaved_on_quit(self, result: str) -> None:
+        """Internal helper for `handle_unsaved_on_quit`."""
         if result == "save":
             self._do_save()
             self.app.exit()

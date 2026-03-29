@@ -9,6 +9,7 @@ from cli.widgets.detail_panel import EditFormState
 
 
 def _sample_appointment() -> Appointment:
+    """Internal helper for `sample_appointment`."""
     start = datetime(2026, 1, 15, 10, 0, tzinfo=timezone.utc)
     return Appointment(
         id=77,

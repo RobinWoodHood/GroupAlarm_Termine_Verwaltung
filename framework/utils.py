@@ -105,6 +105,7 @@ def relative_notification(start: datetime, days_before: int = 0, minutes_before:
 
 
 def _get_zoneinfo(tz_name: str):
+    """Internal helper for `get_zoneinfo`."""
     if ZoneInfo is not None:
         try:
             return ZoneInfo(tz_name)
@@ -119,6 +120,7 @@ def _get_zoneinfo(tz_name: str):
 
 
 def _ensure_aware(dt: datetime) -> datetime:
+    """Internal helper for `ensure_aware`."""
     if dt.tzinfo is None:
         return dt.replace(tzinfo=timezone.utc)
     return dt

@@ -23,6 +23,7 @@ def validate_reminder_minutes(total_minutes: int) -> None:
 
 
 def convert_reminder_to_minutes(value: int, unit: str) -> int:
+    """Execute `convert_reminder_to_minutes`."""
     unit_key = unit.lower()
     if unit_key not in REMINDER_UNIT_FACTORS:
         raise ValueError(f"Unsupported reminder unit '{unit}'")
@@ -33,6 +34,7 @@ def convert_reminder_to_minutes(value: int, unit: str) -> int:
 
 @dataclass
 class Appointment:
+    """Container class `Appointment`."""
     name: str
     description: str
     startDate: datetime

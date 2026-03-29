@@ -4,6 +4,7 @@ from framework.log_sanitizer import ApiKeySanitizer, install_api_key_sanitizer
 
 
 def test_sanitizer_replaces_key_in_message():
+    """Test `sanitizer_replaces_key_in_message` behavior."""
     filt = ApiKeySanitizer("my-secret-key-123")
     record = logging.LogRecord(
         name="test", level=logging.INFO, pathname="", lineno=0,
@@ -15,6 +16,7 @@ def test_sanitizer_replaces_key_in_message():
 
 
 def test_sanitizer_replaces_key_in_args():
+    """Test `sanitizer_replaces_key_in_args` behavior."""
     filt = ApiKeySanitizer("secret")
     record = logging.LogRecord(
         name="test", level=logging.INFO, pathname="", lineno=0,
@@ -26,6 +28,7 @@ def test_sanitizer_replaces_key_in_args():
 
 
 def test_sanitizer_passes_through_clean_messages():
+    """Test `sanitizer_passes_through_clean_messages` behavior."""
     filt = ApiKeySanitizer("secret")
     record = logging.LogRecord(
         name="test", level=logging.INFO, pathname="", lineno=0,
@@ -37,6 +40,7 @@ def test_sanitizer_passes_through_clean_messages():
 
 
 def test_install_adds_filter_to_root_logger():
+    """Test `install_adds_filter_to_root_logger` behavior."""
     root = logging.getLogger()
     original_count = len(root.filters)
     install_api_key_sanitizer("test-key")
@@ -46,6 +50,7 @@ def test_install_adds_filter_to_root_logger():
 
 
 def test_install_with_empty_key_does_nothing():
+    """Test `install_with_empty_key_does_nothing` behavior."""
     root = logging.getLogger()
     original_count = len(root.filters)
     install_api_key_sanitizer("")

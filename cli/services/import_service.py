@@ -66,10 +66,12 @@ class ImportSummary:
 
     @property
     def failed_results(self) -> list[UploadResult]:
+        """Execute `failed_results`."""
         return [r for r in self.results if r.action == "failed"]
 
     @property
     def success_rate(self) -> float:
+        """Execute `success_rate`."""
         if self.total == 0:
             return 0.0
         return (self.created + self.updated) / self.total * 100
@@ -451,9 +453,11 @@ def upload(
     logger.info("Starting import upload: total=%d dry_run=%s", len(appointments), dry_run)
 
     def _extract_token(appt: Appointment) -> Optional[str]:
+        """Internal helper for `extract_token`."""
         return ImporterToken.find_in_text(appt.description)
 
     def _format_start(appt: Appointment) -> Optional[str]:
+        """Internal helper for `format_start`."""
         try:
             return appt.startDate.astimezone().strftime("%d.%m.%Y %H:%M")
         except Exception:

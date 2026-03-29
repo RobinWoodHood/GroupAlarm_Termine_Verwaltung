@@ -62,6 +62,7 @@ SAMPLE_APPOINTMENTS = [
 
 
 def _make_mock_client():
+    """Internal helper for `make_mock_client`."""
     client = MagicMock(spec=GroupAlarmClient)
     client.token = "test-token"
     client.dry_run = False
@@ -71,6 +72,7 @@ def _make_mock_client():
 
 
 def _make_app(client=None, dry_run=False, show_startup_welcome=True):
+    """Internal helper for `make_app`."""
     if client is None:
         client = _make_mock_client()
     config = AppConfig(
@@ -105,6 +107,7 @@ async def test_app_startup_calls_list_labels():
 
 @pytest.mark.asyncio
 async def test_startup_welcome_stays_visible_until_explicit_selection():
+    """Test `startup_welcome_stays_visible_until_explicit_selection` behavior."""
     app = _make_app(show_startup_welcome=True)
     async with app.run_test(size=(120, 40)) as pilot:
         await pilot.pause()
@@ -116,6 +119,7 @@ async def test_startup_welcome_stays_visible_until_explicit_selection():
 
 @pytest.mark.asyncio
 async def test_startup_welcome_disabled_keeps_live_preview_behavior():
+    """Test `startup_welcome_disabled_keeps_live_preview_behavior` behavior."""
     app = _make_app(show_startup_welcome=False)
     async with app.run_test(size=(120, 40)) as pilot:
         await pilot.pause()
@@ -127,10 +131,12 @@ async def test_startup_welcome_disabled_keeps_live_preview_behavior():
 
 @pytest.mark.asyncio
 async def test_command_palette_toggle_persists_startup_welcome(monkeypatch):
+    """Test `command_palette_toggle_persists_startup_welcome` behavior."""
     app = _make_app(show_startup_welcome=True)
     saved_values: list[bool] = []
 
     def _fake_save(config, path=None):
+        """Internal helper for `fake_save`."""
         saved_values.append(config.show_startup_welcome)
 
     monkeypatch.setattr(app_module, "save_config", _fake_save)

@@ -5,8 +5,11 @@ maps participant codes and sets label 40436 when a 'ZTr' token is present.
 
 Run this file and follow the prompt for your token. Set `dry_run=True` to preview payloads.
 """
+from typing import Dict, Iterable
+
 from framework import configure_logging
 from framework.importers import CSVImporter
+from framework.label_mapper import map_labels_from_participants
 from framework.runner import Runner
 from framework.utils import parse_date
 
@@ -14,7 +17,17 @@ from framework.utils import parse_date
 configure_logging(level='INFO', logfile='groupalarm.log', max_bytes=5 * 1024 * 1024, backup_count=5)
 
 
-from framework.label_mapper import map_labels_from_participants, DEFAULT_TOKEN_MAP
+LabelValue = int | Iterable[int]
+
+DEFAULT_TOKEN_MAP: Dict[str, LabelValue] = {
+    "1.TZ/ZTr TZ": 40436,
+    "1.TZ/B": 40427,
+    "1.TZ/FGr N": 40433,
+    "1.TZ/FGr E": 40429,
+    "UFB": [40428, 40431, 40434, 40435],
+    "KF CE": 40442,
+    "KF BE": 40441,
+}
 
 # You can extend DEFAULT_TOKEN_MAP or pass your own map to `map_labels_from_participants`.
 # DEFAULT_TOKEN_MAP currently contains: ZTr, FGr, N, E

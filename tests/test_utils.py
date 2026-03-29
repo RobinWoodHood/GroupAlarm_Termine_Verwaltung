@@ -18,6 +18,7 @@ from framework.utils import (
 
 
 def test_parse_date_with_format_and_tz():
+    """Test `parse_date_with_format_and_tz` behavior."""
     s = "06.01.2026 19:00"
     dt = parse_date(s, fmt="%d.%m.%Y %H:%M", tz="Europe/Berlin")
     assert dt.year == 2026
@@ -26,18 +27,21 @@ def test_parse_date_with_format_and_tz():
 
 
 def test_parse_date_with_hour_only():
+    """Test `parse_date_with_hour_only` behavior."""
     s = "06.01.2026"
     dt = parse_date(s, fmt="%d.%m.%Y", hour=8, tz="UTC")
     assert dt.hour == 8
 
 
 def test_relative_notification():
+    """Test `relative_notification` behavior."""
     start = datetime(2026, 1, 10, 12, 0, tzinfo=timezone.utc)
     res = relative_notification(start, days_before=5, minutes_before=30)
     assert res == start - timedelta(days=5, minutes=30)
 
 
 def test_format_de_datetime_converts_utc_to_berlin():
+    """Test `format_de_datetime_converts_utc_to_berlin` behavior."""
     dt = datetime(2026, 6, 15, 10, 0, tzinfo=timezone.utc)
     formatted = format_de_datetime(dt)
     assert formatted.text == "15.06.2026 12:00"
@@ -45,6 +49,7 @@ def test_format_de_datetime_converts_utc_to_berlin():
 
 
 def test_format_de_datetime_falls_back_on_invalid_timezone():
+    """Test `format_de_datetime_falls_back_on_invalid_timezone` behavior."""
     dt = datetime(2026, 6, 15, 10, 0, tzinfo=timezone.utc)
     formatted = format_de_datetime(dt, tz_name="Mars/Phobos")
     assert formatted.text == dt.isoformat()
@@ -52,6 +57,7 @@ def test_format_de_datetime_falls_back_on_invalid_timezone():
 
 
 def test_format_de_datetime_handles_dst_transition():
+    """Test `format_de_datetime_handles_dst_transition` behavior."""
     dt = datetime(2026, 3, 29, 1, 30, tzinfo=timezone.utc)
     formatted = format_de_datetime(dt)
     assert formatted.text == "29.03.2026 03:30"
@@ -59,6 +65,7 @@ def test_format_de_datetime_handles_dst_transition():
 
 
 def test_format_de_datetime_warns_for_naive_datetime_with_bad_timezone():
+    """Test `format_de_datetime_warns_for_naive_datetime_with_bad_timezone` behavior."""
     dt = datetime(2026, 6, 15, 10, 0)
     formatted = format_de_datetime(dt, tz_name="Invalid/Zone")
     assert formatted.warning is not None
@@ -66,6 +73,7 @@ def test_format_de_datetime_warns_for_naive_datetime_with_bad_timezone():
 
 
 def test_parse_de_datetime_returns_aware_datetime():
+    """Test `parse_de_datetime_returns_aware_datetime` behavior."""
     dt = parse_de_datetime("02.04.2026", "09:30")
     assert dt.tzinfo is not None
     assert dt.hour == 9
@@ -73,17 +81,20 @@ def test_parse_de_datetime_returns_aware_datetime():
 
 
 def test_reminder_conversion_uses_expected_factors():
+    """Test `reminder_conversion_uses_expected_factors` behavior."""
     assert REMINDER_UNIT_FACTORS["hours"] == 60
     assert convert_reminder_to_minutes(2, "hours") == 120
     assert convert_reminder_to_minutes(1, "weeks") == 10080
 
 
 def test_reminder_conversion_rejects_unknown_units():
+    """Test `reminder_conversion_rejects_unknown_units` behavior."""
     with pytest.raises(ValueError):
         convert_reminder_to_minutes(1, "months")
 
 
 def test_validate_reminder_minutes_guardrail():
+    """Test `validate_reminder_minutes_guardrail` behavior."""
     validate_reminder_minutes(REMINDER_MIN_MINUTES)
     validate_reminder_minutes(REMINDER_MAX_MINUTES)
     with pytest.raises(ValueError):

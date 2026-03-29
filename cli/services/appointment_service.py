@@ -14,6 +14,7 @@ class AppointmentService:
     """Manage the in-memory appointment list with filter/sort/search."""
 
     def __init__(self, client: Any, organization_id: int, date_range_days: int = 30) -> None:
+        """Initialize the AppointmentService instance."""
         self._client = client
         self._organization_id = organization_id
         self._date_range_days = date_range_days
@@ -30,6 +31,7 @@ class AppointmentService:
         self._search_description: bool = False
 
     def load(self, start: Optional[datetime] = None, end: Optional[datetime] = None) -> None:
+        """Execute `load`."""
         now = datetime.now(timezone.utc)
         start_dt = start
         end_dt = end
@@ -67,6 +69,7 @@ class AppointmentService:
         self._apply_filters()
 
     def _dict_to_appointment(self, d: Dict[str, Any]) -> Appointment:
+        """Internal helper for `dict_to_appointment`."""
         from dateutil import parser as dt_parser
         return Appointment(
             id=d.get("id"),
@@ -87,21 +90,25 @@ class AppointmentService:
         )
 
     def set_label_filter(self, label_ids: Optional[List[int]]) -> None:
+        """Execute `set_label_filter`."""
         self._selected_label_ids = label_ids
         self._apply_filters()
 
     def set_search(self, text: str, include_description: Optional[bool] = None) -> None:
+        """Execute `set_search`."""
         self._search_text = text.strip().lower()
         if include_description is not None:
             self._search_description = include_description
         self._apply_filters()
 
     def set_date_filter(self, start: Optional[date], end: Optional[date]) -> None:
+        """Execute `set_date_filter`."""
         self._filter_start_date = start
         self._filter_end_date = end
         self._apply_filters()
 
     def toggle_sort(self) -> str:
+        """Execute `toggle_sort`."""
         if self._sort_key == "startDate":
             self._sort_key = "name"
         else:
@@ -110,6 +117,7 @@ class AppointmentService:
         return self._sort_key
 
     def _apply_filters(self) -> None:
+        """Internal helper for `apply_filters`."""
         result = list(self._all_appointments)
 
         # Label filter
@@ -141,6 +149,7 @@ class AppointmentService:
         self._filtered = result
 
     def _within_date_range(self, appointment: Appointment) -> bool:
+        """Internal helper for `within_date_range`."""
         appt_date = appointment.startDate.date()
         if self._filter_start_date and appt_date < self._filter_start_date:
             return False
@@ -150,13 +159,16 @@ class AppointmentService:
 
     @property
     def appointments(self) -> List[Appointment]:
+        """Execute `appointments`."""
         return list(self._filtered)
 
     @property
     def all_appointments(self) -> List[Appointment]:
+        """Execute `all_appointments`."""
         return list(self._all_appointments)
 
     def get_by_id(self, appt_id: int) -> Optional[Appointment]:
+        """Execute `get_by_id`."""
         for a in self._all_appointments:
             if a.id == appt_id:
                 return a

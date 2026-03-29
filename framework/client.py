@@ -246,6 +246,7 @@ class GroupAlarmClient:
         retries: int = 2,
         backoff: float = 1.0,
     ) -> None:
+        """Execute `delete_appointment`."""
         if strategy not in ("single", "upcoming", "all"):
             raise ValueError(f"Invalid strategy: {strategy!r}")
         url = f"{self.base_url}/appointment/{id_}"
@@ -290,6 +291,7 @@ class GroupAlarmClient:
         organization_id: int,
         label_type: str = "normal",
     ) -> List[Dict[str, Any]]:
+        """Execute `list_labels`."""
         url = f"{self.base_url}/labels"
         params: Dict[str, Any] = {
             "organization": organization_id,

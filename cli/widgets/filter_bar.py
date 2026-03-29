@@ -93,6 +93,7 @@ class FilterBar(Widget):
         controls: FilterControls | None = None,
         **kwargs,
     ) -> None:
+        """Initialize the FilterBar instance."""
         super().__init__(**kwargs)
         self.controls = controls or FilterControls()
         self._default_start = default_start
@@ -116,6 +117,7 @@ class FilterBar(Widget):
             self.controls.set_available_labels(refs)
 
     def compose(self) -> ComposeResult:
+        """Execute `compose`."""
         yield Label("Labels:", classes="filter-label")
         with VerticalScroll(id="label-scroll"):
             with Horizontal(id="label-buttons"):
@@ -143,6 +145,7 @@ class FilterBar(Widget):
     def _normalize_label_refs(
         self, labels: Sequence[LabelReference | dict] | None
     ) -> list[LabelReference]:
+        """Internal helper for `normalize_label_refs`."""
         refs: list[LabelReference] = []
         for label in labels or []:
             if isinstance(label, LabelReference):
@@ -165,15 +168,18 @@ class FilterBar(Widget):
         return refs
 
     def _iter_label_buttons(self) -> list[Button]:
+        """Internal helper for `iter_label_buttons`."""
         return [self._create_label_button(ref) for ref in self.controls.visible_labels]
 
     def _create_label_button(self, label: LabelReference) -> Button:
+        """Internal helper for `create_label_button`."""
         display = f"■ {label.name}"
         btn_id = f"label-{label.id}"
         classes = "label-toggle active" if label.id in self.controls.selected_label_ids else "label-toggle"
         return Button(display, id=btn_id, classes=classes)
 
     def update_labels(self, labels: Sequence[LabelReference | dict]) -> None:
+        """Execute `update_labels`."""
         refs = self._normalize_label_refs(labels)
         self.controls.set_available_labels(refs)
         if self.is_attached:
@@ -182,6 +188,7 @@ class FilterBar(Widget):
             self.refresh()
 
     async def _swap_label_buttons(self) -> None:
+        """Internal helper for `swap_label_buttons`."""
         try:
             container = self.query_one("#label-buttons", Horizontal)
         except Exception:
@@ -191,10 +198,12 @@ class FilterBar(Widget):
 
     @property
     def selected_label_ids(self) -> list[int]:
+        """Execute `selected_label_ids`."""
         return list(self.controls.selected_label_ids)
 
     @property
     def start_date(self) -> str:
+        """Execute `start_date`."""
         try:
             return self.query_one("#start-date", Input).value
         except Exception:
@@ -202,6 +211,7 @@ class FilterBar(Widget):
 
     @property
     def end_date(self) -> str:
+        """Execute `end_date`."""
         try:
             return self.query_one("#end-date", Input).value
         except Exception:
@@ -209,9 +219,11 @@ class FilterBar(Widget):
 
     @property
     def search_in_description(self) -> bool:
+        """Execute `search_in_description`."""
         return self.controls.search_in_description
 
     def on_input_changed(self, event: Input.Changed) -> None:
+        """Handle the `input_changed` event callback."""
         if event.input.id == "search-input":
             self.search_text = event.value
             self.controls.search_text = event.value
@@ -222,15 +234,18 @@ class FilterBar(Widget):
             self.controls.end_date_text = event.value
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
+        """Handle the `input_submitted` event callback."""
         if event.input.id in ("start-date", "end-date"):
             self.post_message(FilterChanged())
 
     def on_descendant_blur(self, event: DescendantBlur) -> None:
+        """Handle the `descendant_blur` event callback."""
         widget = event.widget
         if isinstance(widget, Input) and widget.id in ("start-date", "end-date"):
             self.post_message(FilterChanged())
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle the `button_pressed` event callback."""
         btn_id = event.button.id or ""
         if btn_id.startswith("label-"):
             try:
@@ -244,6 +259,7 @@ class FilterBar(Widget):
                 event.button.remove_class("active")
 
     def on_switch_changed(self, event: Switch.Changed) -> None:
+        """Handle the `switch_changed` event callback."""
         if event.switch.id == "search-desc-toggle":
             self._search_description = bool(event.value)
             self.controls.search_in_description = self._search_description
@@ -251,25 +267,30 @@ class FilterBar(Widget):
             self.post_message(FilterChanged())
 
     def toggle_label(self, label_id: int) -> None:
+        """Execute `toggle_label`."""
         self.controls.toggle_label(label_id)
         self.post_message(FilterChanged())
 
     def set_focus_state(self, focused: bool) -> None:
+        """Execute `set_focus_state`."""
         pass
 
     def focus_start_date(self) -> None:
+        """Execute `focus_start_date`."""
         try:
             self.query_one("#start-date", Input).focus()
         except Exception:
             pass
 
     def focus_end_date(self) -> None:
+        """Execute `focus_end_date`."""
         try:
             self.query_one("#end-date", Input).focus()
         except Exception:
             pass
 
     def focus_search(self) -> None:
+        """Execute `focus_search`."""
         try:
             self.query_one("#search-input", Input).focus()
         except Exception:

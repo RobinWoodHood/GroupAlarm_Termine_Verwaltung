@@ -8,10 +8,12 @@ class ApiKeySanitizer(logging.Filter):
     """Logging filter that replaces the API key in log messages with '***'."""
 
     def __init__(self, api_key: str) -> None:
+        """Initialize the ApiKeySanitizer instance."""
         super().__init__()
         self._api_key = api_key
 
     def filter(self, record: logging.LogRecord) -> bool:
+        """Execute `filter`."""
         if self._api_key:
             if isinstance(record.msg, str) and self._api_key in record.msg:
                 record.msg = record.msg.replace(self._api_key, "***")

@@ -9,15 +9,19 @@ from framework.importer_token import ImporterToken
 
 
 class _ClientStub:
+    """Container class `_ClientStub`."""
     def __init__(self):
+        """Initialize the _ClientStub instance."""
         self.created: list[Appointment] = []
 
     def create_appointment(self, appt: Appointment):
+        """Execute `create_appointment`."""
         self.created.append(appt)
         return {"id": 123}
 
 
 def _appt(description: str) -> Appointment:
+    """Internal helper for `appt`."""
     start = datetime(2026, 4, 1, 10, 0, tzinfo=timezone.utc)
     return Appointment(
         id=None,
@@ -31,6 +35,7 @@ def _appt(description: str) -> Appointment:
 
 
 def test_manual_create_adds_importer_token():
+    """Test `manual_create_adds_importer_token` behavior."""
     client = _ClientStub()
     service = AppointmentService(client, organization_id=100)
     appt = _appt("created manually")
@@ -44,6 +49,7 @@ def test_manual_create_adds_importer_token():
 
 
 def test_manual_create_preserves_existing_token_without_duplication():
+    """Test `manual_create_preserves_existing_token_without_duplication` behavior."""
     client = _ClientStub()
     service = AppointmentService(client, organization_id=100)
     existing = ImporterToken.create_token()

@@ -38,6 +38,7 @@ class HelpScreen(ModalScreen[None]):
     BINDINGS = [("escape", "close", "Close"), ("f1", "close", "Close")]
 
     def compose(self) -> ComposeResult:
+        """Execute `compose`."""
         with Vertical(id="help-container"):
             yield Static("[b]GroupAlarm TUI — Key Bindings[/b]", id="help-title")
             yield Static(
@@ -73,7 +74,9 @@ class HelpScreen(ModalScreen[None]):
             yield Button("Close", id="help-close", variant="primary")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle the `button_pressed` event callback."""
         self.dismiss(None)
 
     def action_close(self) -> None:
+        """Handle the `close` action."""
         self.dismiss(None)

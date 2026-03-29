@@ -59,6 +59,7 @@ SAMPLE_APPOINTMENTS = [
 
 
 def _make_app():
+    """Internal helper for `make_app`."""
     client = MagicMock(spec=GroupAlarmClient)
     client.token = "test-token"
     client.dry_run = False

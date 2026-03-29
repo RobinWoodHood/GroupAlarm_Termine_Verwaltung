@@ -4,10 +4,12 @@ from cli.widgets.state import FilterControls, LabelReference, NavigationState
 
 
 def _make_labels(count: int = 7):
+    """Internal helper for `make_labels`."""
     return [LabelReference(id=i, name=f"Label {i}") for i in range(1, count + 1)]
 
 
 def test_navigation_state_switches_active_panel():
+    """Test `navigation_state_switches_active_panel` behavior."""
     state = NavigationState()
     assert state.active_panel == "list"
 
@@ -23,6 +25,7 @@ def test_navigation_state_switches_active_panel():
 
 
 def test_navigation_state_tracks_cursor_and_filter_focus():
+    """Test `navigation_state_tracks_cursor_and_filter_focus` behavior."""
     state = NavigationState()
     state.set_list_cursor(42)
     assert state.list_cursor_key == 42
@@ -36,12 +39,14 @@ def test_navigation_state_tracks_cursor_and_filter_focus():
 
 
 def test_filter_controls_preview_and_expansion():
+    """Test `filter_controls_preview_and_expansion` behavior."""
     controls = FilterControls(available_labels=_make_labels())
     # all labels are always visible (no preview limit)
     assert len(controls.visible_labels) == 7
 
 
 def test_filter_controls_toggle_selection_and_cleanup():
+    """Test `filter_controls_toggle_selection_and_cleanup` behavior."""
     controls = FilterControls(available_labels=_make_labels(3))
     controls.expand_labels()
 
@@ -58,6 +63,7 @@ def test_filter_controls_toggle_selection_and_cleanup():
 
 
 def test_filter_controls_tracks_shortcut_expansion():
+    """Test `filter_controls_tracks_shortcut_expansion` behavior."""
     controls = FilterControls(available_labels=_make_labels())
     controls.register_shortcut_focus("#start-date")
     assert controls.preview_mode is False

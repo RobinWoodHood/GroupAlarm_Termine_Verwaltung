@@ -60,6 +60,7 @@ class ImportFileDialog(ModalScreen[str | None]):
     ]
 
     def compose(self) -> ComposeResult:
+        """Execute `compose`."""
         with Vertical(id="import-file-container"):
             yield Static("Import Excel File", id="import-file-title")
             yield Input(placeholder="Path to Excel file (.xlsx)", id="import-file-path")
@@ -68,15 +69,18 @@ class ImportFileDialog(ModalScreen[str | None]):
                 yield Button("Cancel", id="import-file-cancel")
 
     def on_mount(self) -> None:
+        """Handle the `mount` event callback."""
         self.query_one("#import-file-path", Input).focus()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle the `button_pressed` event callback."""
         if event.button.id == "import-file-confirm":
             self.action_confirm()
         else:
             self.action_cancel()
 
     def action_confirm(self) -> None:
+        """Handle the `confirm` action."""
         value = self.query_one("#import-file-path", Input).value.strip()
         if not value:
             self.app.notify("Please enter a file path.", severity="warning")
@@ -91,6 +95,7 @@ class ImportFileDialog(ModalScreen[str | None]):
         self.dismiss(str(path))
 
     def action_cancel(self) -> None:
+        """Handle the `cancel` action."""
         logger.info("Import file dialog cancelled")
         self.dismiss(None)
 
@@ -149,6 +154,7 @@ class ImportPreviewScreen(Screen):
         dry_run: bool = False,
         **kwargs,
     ) -> None:
+        """Initialize the ImportPreviewScreen instance."""
         super().__init__(**kwargs)
         self._import_session = import_session
         self._client = client
@@ -166,6 +172,7 @@ class ImportPreviewScreen(Screen):
         self._next_temp_id = -1
 
     def compose(self) -> ComposeResult:
+        """Execute `compose`."""
         yield Static("⚠ IMPORT PREVIEW", id="import-banner")
         with Horizontal(id="import-main-content"):
             with Vertical(id="import-left-pane"):
@@ -182,6 +189,7 @@ class ImportPreviewScreen(Screen):
             yield DetailPanel(id="detail-panel")
 
     def on_mount(self) -> None:
+        """Handle the `mount` event callback."""
         source_name = Path(self._import_session.source_path).name
         tier = "Tier 2" if self._import_session.column_mapping_used.startswith("tier2") else "Tier 1"
         banner = self.query_one("#import-banner", Static)
@@ -210,11 +218,13 @@ class ImportPreviewScreen(Screen):
         self._focus_list_panel()
 
     def _build_label_directory(self) -> list[LabelReference]:
+        """Internal helper for `build_label_directory`."""
         if self._label_service:
             return self._label_service.get_directory()
         return []
 
     def _focus_list_panel(self) -> None:
+        """Internal helper for `focus_list_panel`."""
         try:
             table = self.query_one("#appt-table", DataTable)
             table.focus()
@@ -226,6 +236,7 @@ class ImportPreviewScreen(Screen):
             pass
 
     def _focus_detail_panel(self) -> None:
+        """Internal helper for `focus_detail_panel`."""
         detail = self.query_one("#detail-panel", DetailPanel)
         detail.focus_content()
         appt_list = self.query_one("#appt-list", AppointmentList)
@@ -233,6 +244,7 @@ class ImportPreviewScreen(Screen):
         detail.set_focus_state(True)
 
     def _refresh_list(self) -> None:
+        """Internal helper for `refresh_list`."""
         appt_list = self.query_one("#appt-list", AppointmentList)
 
         display_appointments = []
@@ -259,6 +271,7 @@ class ImportPreviewScreen(Screen):
             self.query_one("#detail-panel", DetailPanel).show_help()
 
     def on_filter_changed(self, _event: FilterChanged) -> None:
+        """Handle the `filter_changed` event callback."""
         filter_bar = self.query_one("#filter-bar", FilterBar)
         search = (filter_bar.search_text or "").strip().lower()
         selected_labels = set(filter_bar.selected_label_ids)
@@ -271,6 +284,7 @@ class ImportPreviewScreen(Screen):
             return
 
         def matches(appt) -> bool:
+            """Execute `matches`."""
             if selected_labels and not (set(appt.labelIDs or []) & selected_labels):
                 return False
 
@@ -292,6 +306,7 @@ class ImportPreviewScreen(Screen):
         self._refresh_list()
 
     def _parse_filter_date(self, value: str):
+        """Internal helper for `parse_filter_date`."""
         text = (value or "").strip()
         if not text:
             return None
@@ -301,9 +316,11 @@ class ImportPreviewScreen(Screen):
             return None
 
     def on_appointment_highlighted(self, event: AppointmentHighlighted) -> None:
+        """Handle the `appointment_highlighted` event callback."""
         self._show_detail_for_row_key(event.appointment_id)
 
     def _show_detail_for_row_key(self, row_key: int) -> None:
+        """Internal helper for `show_detail_for_row_key`."""
         appt = self._row_key_to_appt.get(row_key)
         if not appt:
             return
@@ -311,22 +328,28 @@ class ImportPreviewScreen(Screen):
         detail.show_appointment(appt, self._label_service, display_tz=self._display_timezone)
 
     def action_search(self) -> None:
+        """Handle the `search` action."""
         self.query_one("#filter-bar", FilterBar).focus_search()
 
     def action_focus_start_filter(self) -> None:
+        """Handle the `focus_start_filter` action."""
         self.query_one("#filter-bar", FilterBar).focus_start_date()
 
     def action_focus_list_panel(self) -> None:
+        """Handle the `focus_list_panel` action."""
         self._focus_list_panel()
 
     def action_focus_detail_panel(self) -> None:
+        """Handle the `focus_detail_panel` action."""
         self._focus_detail_panel()
 
     def action_cancel(self) -> None:
+        """Handle the `cancel` action."""
         logger.info("Import preview cancelled by user")
         self.app.pop_screen()
 
     def _materialize_upload_appointments(self):
+        """Internal helper for `materialize_upload_appointments`."""
         upload_items = []
         for appt in self._filtered_appointments:
             copy_appt = deepcopy(appt)
@@ -336,6 +359,7 @@ class ImportPreviewScreen(Screen):
         return upload_items
 
     def action_upload(self) -> None:
+        """Handle the `upload` action."""
         if not self._filtered_appointments:
             self.app.notify("No appointments to upload.", severity="warning")
             return
@@ -364,6 +388,7 @@ class ImportPreviewScreen(Screen):
         )
 
         def _on_confirm(confirmed: bool | None) -> None:
+            """Handle the internal `confirm` callback."""
             if not confirmed:
                 logger.info("Upload confirmation cancelled")
                 return
@@ -374,6 +399,7 @@ class ImportPreviewScreen(Screen):
 
     def _on_summary_dismissed(self, _result: None) -> None:
         # Summary modal is already dismissed here; now close preview and refresh main screen.
+        """Handle the internal `summary_dismissed` callback."""
         logger.info("Import summary dismissed; returning to main screen and refreshing")
         self.app.pop_screen()
         screen = self.app.screen

@@ -7,6 +7,7 @@ from cli.widgets.state import FilterControls, LabelReference
 
 
 def _make_labels(count: int, zero_ids=None):
+    """Internal helper for `make_labels`."""
     zero_ids = zero_ids or set()
     return [
         LabelReference(
@@ -20,17 +21,21 @@ def _make_labels(count: int, zero_ids=None):
 
 
 class _FilterBarTestApp(App):
+    """Container class `_FilterBarTestApp`."""
     def __init__(self, widget: FilterBar):
+        """Initialize the _FilterBarTestApp instance."""
         super().__init__()
         self._widget = widget
 
     def compose(self) -> ComposeResult:
+        """Execute `compose`."""
         yield self._widget
         yield Static(id="sentinel")
 
 
 @pytest.mark.asyncio
 async def test_filter_bar_shows_all_labels():
+    """Test `filter_bar_shows_all_labels` behavior."""
     controls = FilterControls()
     labels = _make_labels(7)
     fb = FilterBar(labels=labels, controls=controls)
@@ -44,6 +49,7 @@ async def test_filter_bar_shows_all_labels():
 
 @pytest.mark.asyncio
 async def test_zero_match_labels_show_indicator():
+    """Test `zero_match_labels_show_indicator` behavior."""
     controls = FilterControls()
     labels = _make_labels(3, zero_ids={2})
     fb = FilterBar(labels=labels, controls=controls)
@@ -58,6 +64,7 @@ async def test_zero_match_labels_show_indicator():
 
 @pytest.mark.asyncio
 async def test_shortcut_focus_works():
+    """Test `shortcut_focus_works` behavior."""
     controls = FilterControls()
     labels = _make_labels(6)
     fb = FilterBar(labels=labels, controls=controls)

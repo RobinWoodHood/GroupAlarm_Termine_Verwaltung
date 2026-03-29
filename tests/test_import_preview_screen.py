@@ -14,18 +14,23 @@ from framework.config import AppConfig
 
 
 class _LabelServiceStub:
+    """Container class `_LabelServiceStub`."""
     def get_directory(self):
+        """Execute `get_directory`."""
         return []
 
     def get_names_for_ids(self, label_ids):
+        """Execute `get_names_for_ids`."""
         return ", ".join(str(v) for v in label_ids)
 
 
 class _ClientStub:
+    """Container class `_ClientStub`."""
     pass
 
 
 def _appt(appt_id: int | None, name: str) -> Appointment:
+    """Internal helper for `appt`."""
     start = datetime(2026, 5, 1, 8, 0, tzinfo=timezone.utc)
     return Appointment(
         id=appt_id,
@@ -40,25 +45,32 @@ def _appt(appt_id: int | None, name: str) -> Appointment:
 
 
 class _PreviewHostApp(App):
+    """Container class `_PreviewHostApp`."""
     def __init__(self, preview_screen: ImportPreviewScreen):
+        """Initialize the _PreviewHostApp instance."""
         super().__init__()
         self._preview_screen = preview_screen
 
     def on_mount(self) -> None:
+        """Handle the `mount` event callback."""
         self.push_screen(self._preview_screen)
 
 
 class _DialogHostApp(App):
+    """Container class `_DialogHostApp`."""
     def __init__(self, dialog: ImportFileDialog):
+        """Initialize the _DialogHostApp instance."""
         super().__init__()
         self._dialog = dialog
 
     def on_mount(self) -> None:
+        """Handle the `mount` event callback."""
         self.push_screen(self._dialog)
 
 
 @pytest.mark.asyncio
 async def test_preview_mount_navigation_filter_and_cancel(tmp_path):
+    """Test `preview_mount_navigation_filter_and_cancel` behavior."""
     source = tmp_path / "sample.xlsx"
     source.write_text("x", encoding="utf-8")
     session = ImportSession(
@@ -108,6 +120,7 @@ async def test_preview_mount_navigation_filter_and_cancel(tmp_path):
 
 @pytest.mark.asyncio
 async def test_import_file_dialog_validates_path(tmp_path):
+    """Test `import_file_dialog_validates_path` behavior."""
     dialog = ImportFileDialog()
     app = _DialogHostApp(dialog)
 

@@ -10,16 +10,20 @@ from cli.services.import_service import ImportSummary, UploadResult
 
 
 class _SummaryHostApp(App):
+    """Container class `_SummaryHostApp`."""
     def __init__(self, summary_screen: ImportSummaryScreen):
+        """Initialize the _SummaryHostApp instance."""
         super().__init__()
         self._summary_screen = summary_screen
 
     def on_mount(self) -> None:
+        """Handle the `mount` event callback."""
         self.push_screen(self._summary_screen)
 
 
 @pytest.mark.asyncio
 async def test_import_summary_screen_displays_counts_and_failures():
+    """Test `import_summary_screen_displays_counts_and_failures` behavior."""
     summary = ImportSummary(
         total=3,
         created=1,
@@ -48,6 +52,7 @@ async def test_import_summary_screen_displays_counts_and_failures():
 
 @pytest.mark.asyncio
 async def test_import_summary_screen_dry_run_title_and_dismiss():
+    """Test `import_summary_screen_dry_run_title_and_dismiss` behavior."""
     summary = ImportSummary(total=1, created=1, updated=0, failed=0, dry_run=True, results=[])
 
     app = _SummaryHostApp(ImportSummaryScreen(summary))

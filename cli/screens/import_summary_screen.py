@@ -51,10 +51,12 @@ class ImportSummaryScreen(ModalScreen[None]):
     ]
 
     def __init__(self, summary: ImportSummary, **kwargs) -> None:
+        """Initialize the ImportSummaryScreen instance."""
         super().__init__(**kwargs)
         self._summary = summary
 
     def compose(self) -> ComposeResult:
+        """Execute `compose`."""
         title = "Import Summary (DRY-RUN)" if self._summary.dry_run else "Import Summary"
         stats = (
             f"Total: {self._summary.total} | "
@@ -81,7 +83,9 @@ class ImportSummaryScreen(ModalScreen[None]):
             yield Button("OK", id="import-summary-ok", variant="primary")
 
     def on_button_pressed(self, _event: Button.Pressed) -> None:
+        """Handle the `button_pressed` event callback."""
         self.dismiss(None)
 
     def action_dismiss_screen(self) -> None:
+        """Handle the `dismiss_screen` action."""
         self.dismiss(None)

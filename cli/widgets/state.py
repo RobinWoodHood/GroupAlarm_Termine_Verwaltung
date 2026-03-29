@@ -28,6 +28,7 @@ class NavigationState:
     filter_focus_index: int = 0
 
     def set_active_panel(self, panel: str, focused_widget_id: Optional[str] = None) -> None:
+        """Execute `set_active_panel`."""
         if panel not in VALID_PANELS:
             raise ValueError(f"Unknown panel '{panel}'")
         self.active_panel = panel  # type: ignore[assignment]
@@ -37,16 +38,20 @@ class NavigationState:
             self.reset_filter_focus()
 
     def set_list_cursor(self, appointment_id: Optional[int]) -> None:
+        """Execute `set_list_cursor`."""
         self.list_cursor_key = appointment_id
 
     def focus_filter_index(self, index: int) -> None:
+        """Execute `focus_filter_index`."""
         self.active_panel = "filter"
         self.filter_focus_index = max(0, index)
 
     def advance_filter_focus(self, step: int = 1) -> None:
+        """Execute `advance_filter_focus`."""
         self.focus_filter_index(self.filter_focus_index + step)
 
     def reset_filter_focus(self) -> None:
+        """Execute `reset_filter_focus`."""
         self.filter_focus_index = 0
 
 
@@ -68,6 +73,7 @@ class FilterControls:
     focus_history: List[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
+        """Internal helper for `_post_init__`."""
         self._directory = {label.id: label for label in self.available_labels}
         # Preview mode is unnecessary when the label count is already <= limit
         if len(self.available_labels) <= self.preview_limit:
@@ -75,22 +81,27 @@ class FilterControls:
 
     @property
     def visible_labels(self) -> List[LabelReference]:
+        """Execute `visible_labels`."""
         return list(self.available_labels)
 
     @property
     def hidden_label_count(self) -> int:
+        """Execute `hidden_label_count`."""
         if not self.preview_mode:
             return 0
         return max(0, len(self.available_labels) - self.preview_limit)
 
     def expand_labels(self) -> None:
+        """Execute `expand_labels`."""
         self.preview_mode = False
 
     def collapse_to_preview(self) -> None:
+        """Execute `collapse_to_preview`."""
         if len(self.available_labels) > self.preview_limit:
             self.preview_mode = True
 
     def toggle_label(self, label_id: int) -> None:
+        """Execute `toggle_label`."""
         if label_id not in self._directory:
             return
         if label_id in self.selected_label_ids:
@@ -99,10 +110,12 @@ class FilterControls:
             self.selected_label_ids.add(label_id)
 
     def register_shortcut_focus(self, widget_id: str) -> None:
+        """Execute `register_shortcut_focus`."""
         self.focus_history.append(widget_id)
         self.expand_labels()
 
     def set_available_labels(self, labels: List[LabelReference]) -> None:
+        """Execute `set_available_labels`."""
         previously_needed_preview = len(self.available_labels) > self.preview_limit
         self.available_labels = labels
         self._directory = {label.id: label for label in labels}
@@ -116,6 +129,7 @@ class FilterControls:
             self.preview_mode = True
 
     def reset(self) -> None:
+        """Execute `reset`."""
         self.start_date_text = ""
         self.end_date_text = ""
         self.search_text = ""

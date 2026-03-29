@@ -11,6 +11,7 @@ import sys
 
 
 def main() -> None:
+    """Execute `main`."""
     parser = argparse.ArgumentParser(
         description="Interactive TUI for managing GroupAlarm appointments",
     )

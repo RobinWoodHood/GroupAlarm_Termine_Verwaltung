@@ -2,6 +2,7 @@ from framework.importer_token import ImporterToken
 
 
 def test_create_and_find_token():
+    """Test `create_and_find_token` behavior."""
     token = ImporterToken.create_token()
     assert token.startswith('[GA-IMPORTER:')
     assert ImporterToken.find_in_text('foo\n' + token + '\nbar') == token
@@ -9,6 +10,7 @@ def test_create_and_find_token():
 
 
 def test_token_format_is_short():
+    """Test `token_format_is_short` behavior."""
     token = ImporterToken.create_token()
     # inside the brackets we expect 3 parts separated by '|', and short lengths
     inner = token.strip('[]').split(':', 1)[1]
@@ -19,5 +21,6 @@ def test_token_format_is_short():
 
 
 def test_find_none():
+    """Test `find_none` behavior."""
     assert ImporterToken.find_in_text('no token here') is None
     assert ImporterToken.find_in_text(None) is None

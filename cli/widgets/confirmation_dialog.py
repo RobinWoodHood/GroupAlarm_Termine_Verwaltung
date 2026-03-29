@@ -106,6 +106,7 @@ class ConfirmationDialog(ModalScreen[bool]):
         cancel_label: str = "Cancel",
         **kwargs,
     ) -> None:
+        """Initialize the ConfirmationDialog instance."""
         super().__init__(**kwargs)
         self._title = title
         self._body = body
@@ -116,6 +117,7 @@ class ConfirmationDialog(ModalScreen[bool]):
         self._confirm_key = (confirm_key or confirm_label[0]).lower()
 
     def compose(self) -> ComposeResult:
+        """Execute `compose`."""
         confirm_display = _underline_key(self._confirm_label, self._confirm_key)
         with Vertical(id="confirmation-container"):
             yield Static(self._title, id="confirmation-title")
@@ -132,15 +134,19 @@ class ConfirmationDialog(ModalScreen[bool]):
 
     def on_mount(self) -> None:
         # Dynamically bind the confirm key
+        """Handle the `mount` event callback."""
         self._bindings.bind(self._confirm_key, "confirm", self._confirm_label, show=False)
 
     def action_confirm(self) -> None:
+        """Handle the `confirm` action."""
         self.dismiss(True)
 
     def action_cancel(self) -> None:
+        """Handle the `cancel` action."""
         self.dismiss(False)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle the `button_pressed` event callback."""
         self.dismiss(event.button.id == "confirm-yes")
 
     @staticmethod
@@ -251,6 +257,7 @@ class UnsavedChangesDialog(ModalScreen[str]):
     """
 
     def compose(self) -> ComposeResult:
+        """Execute `compose`."""
         with Vertical(id="unsaved-container"):
             yield Static("[b]Unsaved Changes[/b]", id="unsaved-title")
             yield Static("You have unsaved changes. What would you like to do?")
@@ -261,15 +268,19 @@ class UnsavedChangesDialog(ModalScreen[str]):
             yield Static("[dim]S = Save  ·  D = Discard  ·  Esc = Cancel[/dim]", id="unsaved-hint")
 
     def action_do_save(self) -> None:
+        """Handle the `do_save` action."""
         self.dismiss("save")
 
     def action_do_discard(self) -> None:
+        """Handle the `do_discard` action."""
         self.dismiss("discard")
 
     def action_do_cancel(self) -> None:
+        """Handle the `do_cancel` action."""
         self.dismiss("cancel")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle the `button_pressed` event callback."""
         result_map = {
             "unsaved-save": "save",
             "unsaved-discard": "discard",
@@ -320,6 +331,7 @@ class RecurrenceStrategyDialog(ModalScreen[str]):
     """
 
     def compose(self) -> ComposeResult:
+        """Execute `compose`."""
         with Vertical(id="strategy-container"):
             yield Static("[b]Recurring Appointment[/b]", id="strategy-title")
             yield Static("This is a recurring appointment. Choose the scope:")
@@ -331,18 +343,23 @@ class RecurrenceStrategyDialog(ModalScreen[str]):
             yield Static("[dim]T = This only  ·  U = Upcoming  ·  A = All  ·  Esc = Cancel[/dim]", id="strategy-hint")
 
     def action_choose_single(self) -> None:
+        """Handle the `choose_single` action."""
         self.dismiss("single")
 
     def action_choose_upcoming(self) -> None:
+        """Handle the `choose_upcoming` action."""
         self.dismiss("upcoming")
 
     def action_choose_all(self) -> None:
+        """Handle the `choose_all` action."""
         self.dismiss("all")
 
     def action_choose_cancel(self) -> None:
+        """Handle the `choose_cancel` action."""
         self.dismiss("")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle the `button_pressed` event callback."""
         result_map = {
             "strategy-single": "single",
             "strategy-upcoming": "upcoming",

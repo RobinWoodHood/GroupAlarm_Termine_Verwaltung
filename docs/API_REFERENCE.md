@@ -1,6 +1,6 @@
 # Project API Reference
 
-_Generated automatically on 2026-03-29 00:00 UTC._
+_Generated automatically on 2026-03-29 01:05 UTC._
 
 Each section lists the classes and functions discovered per module. Methods are included under their respective classes.
 
@@ -14,19 +14,19 @@ Interactive TUI for GroupAlarm appointment management.
 
 ##### Methods
 
-- `__init__(self, client, config, org_id=None, dry_run=False, **kwargs)` — No docstring provided.
-- `on_mount(self)` — No docstring provided.
+- `__init__(self, client, config, org_id=None, dry_run=False, **kwargs)` — Initialize the GroupAlarmApp instance.
+- `on_mount(self)` — Handle the `mount` event callback.
 - `get_system_commands(self, screen)` — Expose custom commands in Ctrl+P command palette.
 - `action_toggle_startup_welcome(self)` — Toggle startup welcome behavior and persist config.
-- `action_focus_start_filter(self)` — No docstring provided.
-- `action_search(self)` — No docstring provided.
-- `action_new_appointment(self)` — No docstring provided.
-- `action_delete_appointment(self)` — No docstring provided.
-- `action_export(self)` — No docstring provided.
-- `action_add_importer_tokens(self)` — No docstring provided.
-- `action_import(self)` — No docstring provided.
-- `action_help(self)` — No docstring provided.
-- `action_refresh(self)` — No docstring provided.
+- `action_focus_start_filter(self)` — Handle the `focus_start_filter` action.
+- `action_search(self)` — Handle the `search` action.
+- `action_new_appointment(self)` — Handle the `new_appointment` action.
+- `action_delete_appointment(self)` — Handle the `delete_appointment` action.
+- `action_export(self)` — Handle the `export` action.
+- `action_add_importer_tokens(self)` — Handle the `add_importer_tokens` action.
+- `action_import(self)` — Handle the `import` action.
+- `action_help(self)` — Handle the `help` action.
+- `action_refresh(self)` — Handle the `refresh` action.
 - `action_quit(self)` — Quit with unsaved changes guard.
 
 ## cli/screens/help_screen.py
@@ -39,9 +39,9 @@ Modal overlay showing all available key bindings.
 
 ##### Methods
 
-- `compose(self)` — No docstring provided.
-- `on_button_pressed(self, event)` — No docstring provided.
-- `action_close(self)` — No docstring provided.
+- `compose(self)` — Execute `compose`.
+- `on_button_pressed(self, event)` — Handle the `button_pressed` event callback.
+- `action_close(self)` — Handle the `close` action.
 
 ## cli/screens/import_preview_screen.py
 
@@ -53,11 +53,11 @@ Simple modal to collect the import Excel path.
 
 ##### Methods
 
-- `compose(self)` — No docstring provided.
-- `on_mount(self)` — No docstring provided.
-- `on_button_pressed(self, event)` — No docstring provided.
-- `action_confirm(self)` — No docstring provided.
-- `action_cancel(self)` — No docstring provided.
+- `compose(self)` — Execute `compose`.
+- `on_mount(self)` — Handle the `mount` event callback.
+- `on_button_pressed(self, event)` — Handle the `button_pressed` event callback.
+- `action_confirm(self)` — Handle the `confirm` action.
+- `action_cancel(self)` — Handle the `cancel` action.
 
 #### ImportPreviewScreen
 
@@ -65,25 +65,25 @@ Read-only import preview with filter/navigation/upload flow.
 
 ##### Methods
 
-- `__init__(self, import_session, client, label_service, config, dry_run=False, **kwargs)` — No docstring provided.
-- `compose(self)` — No docstring provided.
-- `on_mount(self)` — No docstring provided.
-- `_build_label_directory(self)` — No docstring provided.
-- `_focus_list_panel(self)` — No docstring provided.
-- `_focus_detail_panel(self)` — No docstring provided.
-- `_refresh_list(self)` — No docstring provided.
-- `on_filter_changed(self, _event)` — No docstring provided.
-- `_parse_filter_date(self, value)` — No docstring provided.
-- `on_appointment_highlighted(self, event)` — No docstring provided.
-- `_show_detail_for_row_key(self, row_key)` — No docstring provided.
-- `action_search(self)` — No docstring provided.
-- `action_focus_start_filter(self)` — No docstring provided.
-- `action_focus_list_panel(self)` — No docstring provided.
-- `action_focus_detail_panel(self)` — No docstring provided.
-- `action_cancel(self)` — No docstring provided.
-- `_materialize_upload_appointments(self)` — No docstring provided.
-- `action_upload(self)` — No docstring provided.
-- `_on_summary_dismissed(self, _result)` — No docstring provided.
+- `__init__(self, import_session, client, label_service, config, dry_run=False, **kwargs)` — Initialize the ImportPreviewScreen instance.
+- `compose(self)` — Execute `compose`.
+- `on_mount(self)` — Handle the `mount` event callback.
+- `_build_label_directory(self)` — Internal helper for `build_label_directory`.
+- `_focus_list_panel(self)` — Internal helper for `focus_list_panel`.
+- `_focus_detail_panel(self)` — Internal helper for `focus_detail_panel`.
+- `_refresh_list(self)` — Internal helper for `refresh_list`.
+- `on_filter_changed(self, _event)` — Handle the `filter_changed` event callback.
+- `_parse_filter_date(self, value)` — Internal helper for `parse_filter_date`.
+- `on_appointment_highlighted(self, event)` — Handle the `appointment_highlighted` event callback.
+- `_show_detail_for_row_key(self, row_key)` — Internal helper for `show_detail_for_row_key`.
+- `action_search(self)` — Handle the `search` action.
+- `action_focus_start_filter(self)` — Handle the `focus_start_filter` action.
+- `action_focus_list_panel(self)` — Handle the `focus_list_panel` action.
+- `action_focus_detail_panel(self)` — Handle the `focus_detail_panel` action.
+- `action_cancel(self)` — Handle the `cancel` action.
+- `_materialize_upload_appointments(self)` — Internal helper for `materialize_upload_appointments`.
+- `action_upload(self)` — Handle the `upload` action.
+- `_on_summary_dismissed(self, _result)` — Handle the internal `summary_dismissed` callback.
 
 ## cli/screens/import_summary_screen.py
 
@@ -95,10 +95,10 @@ Display upload summary with failed appointment details.
 
 ##### Methods
 
-- `__init__(self, summary, **kwargs)` — No docstring provided.
-- `compose(self)` — No docstring provided.
-- `on_button_pressed(self, _event)` — No docstring provided.
-- `action_dismiss_screen(self)` — No docstring provided.
+- `__init__(self, summary, **kwargs)` — Initialize the ImportSummaryScreen instance.
+- `compose(self)` — Execute `compose`.
+- `on_button_pressed(self, _event)` — Handle the `button_pressed` event callback.
+- `action_dismiss_screen(self)` — Handle the `dismiss_screen` action.
 
 ## cli/screens/main_screen.py
 
@@ -110,57 +110,57 @@ Primary screen with list + detail split layout.
 
 ##### Methods
 
-- `__init__(self, appointment_service, label_service, user_service=None, config=None, dry_run=False, **kwargs)` — No docstring provided.
-- `compose(self)` — No docstring provided.
-- `on_mount(self)` — No docstring provided.
-- `_load_appointments(self)` — No docstring provided.
+- `__init__(self, appointment_service, label_service, user_service=None, config=None, dry_run=False, **kwargs)` — Initialize the MainScreen instance.
+- `compose(self)` — Execute `compose`.
+- `on_mount(self)` — Handle the `mount` event callback.
+- `_load_appointments(self)` — Internal helper for `load_appointments`.
 - `_validate_display_timezone(self)` — Ensure the configured timezone is usable and warn when conversion falls back.
 - `_lock_ui(self)` — Show loading indicator and block mutation actions.
 - `_unlock_ui(self)` — Hide loading indicator and re-enable mutation actions.
-- `_build_label_directory(self)` — No docstring provided.
-- `_filter_bar(self)` — No docstring provided.
-- `_focus_list_panel(self)` — No docstring provided.
-- `_focus_detail_panel(self)` — No docstring provided.
-- `_update_panel_focus_states(self, target)` — No docstring provided.
-- `on_filter_changed(self, event)` — No docstring provided.
-- `on_appointment_selected(self, event)` — No docstring provided.
-- `on_appointment_highlighted(self, event)` — No docstring provided.
-- `_select_appointment(self, appt_id)` — No docstring provided.
-- `_handle_unsaved_on_selection(self, result)` — No docstring provided.
-- `_parse_filter_date(self, value, field_name)` — No docstring provided.
-- `_normalize_date_text(self, text)` — No docstring provided.
-- `_reload_appointments(self, start_date, end_date)` — No docstring provided.
-- `_update_filter_labels(self)` — No docstring provided.
-- `_date_to_datetime(self, value, clamp_end=False)` — No docstring provided.
-- `action_edit_mode(self)` — No docstring provided.
-- `action_save(self)` — No docstring provided.
-- `_do_save(self, then_select=None)` — No docstring provided.
-- `_on_strategy_selected_for_update(self, strategy, old_values, new_values, then_select)` — No docstring provided.
-- `_on_update_confirmed(self, confirmed, strategy, then_select)` — No docstring provided.
-- `_on_create_confirmed(self, confirmed, then_select)` — No docstring provided.
-- `action_cancel_edit(self)` — No docstring provided.
-- `_handle_unsaved_on_cancel(self, result)` — No docstring provided.
-- `action_new_appointment(self)` — No docstring provided.
-- `_handle_unsaved_then_new(self, result)` — No docstring provided.
-- `_start_create(self)` — No docstring provided.
-- `action_delete_appointment(self)` — No docstring provided.
-- `_on_delete_strategy(self, strategy, appt)` — No docstring provided.
-- `_show_delete_confirmation(self, appt, strategy)` — No docstring provided.
-- `_on_delete_confirmed(self, confirmed, appt, strategy)` — No docstring provided.
-- `action_export(self)` — No docstring provided.
+- `_build_label_directory(self)` — Internal helper for `build_label_directory`.
+- `_filter_bar(self)` — Internal helper for `filter_bar`.
+- `_focus_list_panel(self)` — Internal helper for `focus_list_panel`.
+- `_focus_detail_panel(self)` — Internal helper for `focus_detail_panel`.
+- `_update_panel_focus_states(self, target)` — Internal helper for `update_panel_focus_states`.
+- `on_filter_changed(self, event)` — Handle the `filter_changed` event callback.
+- `on_appointment_selected(self, event)` — Handle the `appointment_selected` event callback.
+- `on_appointment_highlighted(self, event)` — Handle the `appointment_highlighted` event callback.
+- `_select_appointment(self, appt_id)` — Internal helper for `select_appointment`.
+- `_handle_unsaved_on_selection(self, result)` — Internal helper for `handle_unsaved_on_selection`.
+- `_parse_filter_date(self, value, field_name)` — Internal helper for `parse_filter_date`.
+- `_normalize_date_text(self, text)` — Internal helper for `normalize_date_text`.
+- `_reload_appointments(self, start_date, end_date)` — Internal helper for `reload_appointments`.
+- `_update_filter_labels(self)` — Internal helper for `update_filter_labels`.
+- `_date_to_datetime(self, value, clamp_end=False)` — Internal helper for `date_to_datetime`.
+- `action_edit_mode(self)` — Handle the `edit_mode` action.
+- `action_save(self)` — Handle the `save` action.
+- `_do_save(self, then_select=None)` — Internal helper for `do_save`.
+- `_on_strategy_selected_for_update(self, strategy, old_values, new_values, then_select)` — Handle the internal `strategy_selected_for_update` callback.
+- `_on_update_confirmed(self, confirmed, strategy, then_select)` — Handle the internal `update_confirmed` callback.
+- `_on_create_confirmed(self, confirmed, then_select)` — Handle the internal `create_confirmed` callback.
+- `action_cancel_edit(self)` — Handle the `cancel_edit` action.
+- `_handle_unsaved_on_cancel(self, result)` — Internal helper for `handle_unsaved_on_cancel`.
+- `action_new_appointment(self)` — Handle the `new_appointment` action.
+- `_handle_unsaved_then_new(self, result)` — Internal helper for `handle_unsaved_then_new`.
+- `_start_create(self)` — Internal helper for `start_create`.
+- `action_delete_appointment(self)` — Handle the `delete_appointment` action.
+- `_on_delete_strategy(self, strategy, appt)` — Handle the internal `delete_strategy` callback.
+- `_show_delete_confirmation(self, appt, strategy)` — Internal helper for `show_delete_confirmation`.
+- `_on_delete_confirmed(self, confirmed, appt, strategy)` — Handle the internal `delete_confirmed` callback.
+- `action_export(self)` — Handle the `export` action.
 - `action_import(self)` — Open import dialog, parse file, and push preview screen.
 - `action_add_importer_tokens(self)` — Add GA-IMPORTER tokens to all filtered appointments that don't have one.
-- `_on_add_tokens_confirmed(self, confirmed)` — No docstring provided.
-- `action_search(self)` — No docstring provided.
-- `action_focus_start_filter(self)` — No docstring provided.
-- `action_focus_list_panel(self)` — No docstring provided.
-- `_handle_unsaved_on_focus_list(self, result)` — No docstring provided.
-- `action_focus_detail_panel(self)` — No docstring provided.
-- `action_toggle_sort(self)` — No docstring provided.
-- `action_refresh(self)` — No docstring provided.
-- `refresh_list(self)` — No docstring provided.
+- `_on_add_tokens_confirmed(self, confirmed)` — Handle the internal `add_tokens_confirmed` callback.
+- `action_search(self)` — Handle the `search` action.
+- `action_focus_start_filter(self)` — Handle the `focus_start_filter` action.
+- `action_focus_list_panel(self)` — Handle the `focus_list_panel` action.
+- `_handle_unsaved_on_focus_list(self, result)` — Internal helper for `handle_unsaved_on_focus_list`.
+- `action_focus_detail_panel(self)` — Handle the `focus_detail_panel` action.
+- `action_toggle_sort(self)` — Handle the `toggle_sort` action.
+- `action_refresh(self)` — Handle the `refresh` action.
+- `refresh_list(self)` — Execute `refresh_list`.
 - `_check_dirty_before_quit(self)` — Check for unsaved changes before quitting.
-- `_handle_unsaved_on_quit(self, result)` — No docstring provided.
+- `_handle_unsaved_on_quit(self, result)` — Internal helper for `handle_unsaved_on_quit`.
 
 ## cli/services/appointment_service.py
 
@@ -172,18 +172,18 @@ Manage the in-memory appointment list with filter/sort/search.
 
 ##### Methods
 
-- `__init__(self, client, organization_id, date_range_days=30)` — No docstring provided.
-- `load(self, start=None, end=None)` — No docstring provided.
-- `_dict_to_appointment(self, d)` — No docstring provided.
-- `set_label_filter(self, label_ids)` — No docstring provided.
-- `set_search(self, text, include_description=None)` — No docstring provided.
-- `set_date_filter(self, start, end)` — No docstring provided.
-- `toggle_sort(self)` — No docstring provided.
-- `_apply_filters(self)` — No docstring provided.
-- `_within_date_range(self, appointment)` — No docstring provided.
-- `appointments(self)` — No docstring provided.
-- `all_appointments(self)` — No docstring provided.
-- `get_by_id(self, appt_id)` — No docstring provided.
+- `__init__(self, client, organization_id, date_range_days=30)` — Initialize the AppointmentService instance.
+- `load(self, start=None, end=None)` — Execute `load`.
+- `_dict_to_appointment(self, d)` — Internal helper for `dict_to_appointment`.
+- `set_label_filter(self, label_ids)` — Execute `set_label_filter`.
+- `set_search(self, text, include_description=None)` — Execute `set_search`.
+- `set_date_filter(self, start, end)` — Execute `set_date_filter`.
+- `toggle_sort(self)` — Execute `toggle_sort`.
+- `_apply_filters(self)` — Internal helper for `apply_filters`.
+- `_within_date_range(self, appointment)` — Internal helper for `within_date_range`.
+- `appointments(self)` — Execute `appointments`.
+- `all_appointments(self)` — Execute `all_appointments`.
+- `get_by_id(self, appt_id)` — Execute `get_by_id`.
 - `update(self, appt, strategy='all')` — Update an appointment via the client and refresh local cache.
 - `create(self, appt)` — Create a new appointment via the client.
 - `delete(self, appt_id, strategy='all', time_=None)` — Delete an appointment via the client.
@@ -218,8 +218,8 @@ Aggregate outcome of the full upload operation.
 
 ##### Methods
 
-- `failed_results(self)` — No docstring provided.
-- `success_rate(self)` — No docstring provided.
+- `failed_results(self)` — Execute `failed_results`.
+- `success_rate(self)` — Execute `success_rate`.
 
 ### Functions
 
@@ -299,13 +299,13 @@ Fetch labels from the API once and provide lookup by ID.
 
 ##### Methods
 
-- `__init__(self, client, organization_id)` — No docstring provided.
-- `load(self)` — No docstring provided.
-- `labels(self)` — No docstring provided.
-- `get_by_id(self, label_id)` — No docstring provided.
-- `get_name(self, label_id)` — No docstring provided.
-- `get_color(self, label_id)` — No docstring provided.
-- `get_names_for_ids(self, label_ids)` — No docstring provided.
+- `__init__(self, client, organization_id)` — Initialize the LabelService instance.
+- `load(self)` — Execute `load`.
+- `labels(self)` — Execute `labels`.
+- `get_by_id(self, label_id)` — Execute `get_by_id`.
+- `get_name(self, label_id)` — Execute `get_name`.
+- `get_color(self, label_id)` — Execute `get_color`.
+- `get_names_for_ids(self, label_ids)` — Execute `get_names_for_ids`.
 - `get_directory(self)` — Return rich label references for filters/autocomplete.
 
 ## cli/services/user_service.py
@@ -318,13 +318,13 @@ Fetch org users once and provide display-name lookups.
 
 ##### Methods
 
-- `__init__(self, client, organization_id)` — No docstring provided.
-- `load(self)` — No docstring provided.
-- `_format_display_name(user)` — No docstring provided.
-- `get_display_name(self, user_id)` — No docstring provided.
-- `get_user_id_by_display_name(self, display_name)` — No docstring provided.
-- `get_all_display_names(self)` — No docstring provided.
-- `get_directory(self)` — No docstring provided.
+- `__init__(self, client, organization_id)` — Initialize the UserService instance.
+- `load(self)` — Execute `load`.
+- `_format_display_name(user)` — Internal helper for `format_display_name`.
+- `get_display_name(self, user_id)` — Execute `get_display_name`.
+- `get_user_id_by_display_name(self, display_name)` — Execute `get_user_id_by_display_name`.
+- `get_all_display_names(self)` — Execute `get_all_display_names`.
+- `get_directory(self)` — Execute `get_directory`.
 
 ## cli/widgets/appointment_list.py
 
@@ -336,7 +336,7 @@ Posted when an appointment is selected.
 
 ##### Methods
 
-- `__init__(self, appointment_id)` — No docstring provided.
+- `__init__(self, appointment_id)` — Initialize the AppointmentSelected instance.
 
 #### AppointmentHighlighted
 
@@ -344,7 +344,7 @@ Posted when the cursor moves to a different appointment row.
 
 ##### Methods
 
-- `__init__(self, appointment_id)` — No docstring provided.
+- `__init__(self, appointment_id)` — Initialize the AppointmentHighlighted instance.
 
 #### AppointmentList
 
@@ -352,15 +352,15 @@ Scrollable appointment list as a DataTable.
 
 ##### Methods
 
-- `__init__(self, label_service=None, display_tz='Europe/Berlin', **kwargs)` — No docstring provided.
-- `compose(self)` — No docstring provided.
-- `_fmt_dt(self, dt)` — No docstring provided.
-- `update_appointments(self, appointments)` — No docstring provided.
-- `on_data_table_row_selected(self, event)` — No docstring provided.
-- `on_data_table_row_highlighted(self, event)` — No docstring provided.
-- `get_appointment_at_cursor(self)` — No docstring provided.
-- `set_focus_state(self, focused)` — No docstring provided.
-- `_ensure_arrow_indicator(self)` — No docstring provided.
+- `__init__(self, label_service=None, display_tz='Europe/Berlin', **kwargs)` — Initialize the AppointmentList instance.
+- `compose(self)` — Execute `compose`.
+- `_fmt_dt(self, dt)` — Internal helper for `fmt_dt`.
+- `update_appointments(self, appointments)` — Execute `update_appointments`.
+- `on_data_table_row_selected(self, event)` — Handle the `data_table_row_selected` event callback.
+- `on_data_table_row_highlighted(self, event)` — Handle the `data_table_row_highlighted` event callback.
+- `get_appointment_at_cursor(self)` — Execute `get_appointment_at_cursor`.
+- `set_focus_state(self, focused)` — Execute `set_focus_state`.
+- `_ensure_arrow_indicator(self)` — Internal helper for `ensure_arrow_indicator`.
 
 ## cli/widgets/confirmation_dialog.py
 
@@ -376,12 +376,12 @@ For deletes: name + irreversibility warning.
 
 ##### Methods
 
-- `__init__(self, title, body, warning='', confirm_label='Save', confirm_key='', cancel_label='Cancel', **kwargs)` — No docstring provided.
-- `compose(self)` — No docstring provided.
-- `on_mount(self)` — No docstring provided.
-- `action_confirm(self)` — No docstring provided.
-- `action_cancel(self)` — No docstring provided.
-- `on_button_pressed(self, event)` — No docstring provided.
+- `__init__(self, title, body, warning='', confirm_label='Save', confirm_key='', cancel_label='Cancel', **kwargs)` — Initialize the ConfirmationDialog instance.
+- `compose(self)` — Execute `compose`.
+- `on_mount(self)` — Handle the `mount` event callback.
+- `action_confirm(self)` — Handle the `confirm` action.
+- `action_cancel(self)` — Handle the `cancel` action.
+- `on_button_pressed(self, event)` — Handle the `button_pressed` event callback.
 - `build_update_diff(old_values, new_values, *, warnings=None)` — Build a grouped diff summary for the confirmation dialog.
 - `build_create_summary(values)` — Build a structured payload summary for create confirmation.
 - `build_delete_summary(name, start, end)` — Build a delete confirmation body.
@@ -392,11 +392,11 @@ Modal dialog for unsaved changes — Save, Discard, or Cancel.
 
 ##### Methods
 
-- `compose(self)` — No docstring provided.
-- `action_do_save(self)` — No docstring provided.
-- `action_do_discard(self)` — No docstring provided.
-- `action_do_cancel(self)` — No docstring provided.
-- `on_button_pressed(self, event)` — No docstring provided.
+- `compose(self)` — Execute `compose`.
+- `action_do_save(self)` — Handle the `do_save` action.
+- `action_do_discard(self)` — Handle the `do_discard` action.
+- `action_do_cancel(self)` — Handle the `do_cancel` action.
+- `on_button_pressed(self, event)` — Handle the `button_pressed` event callback.
 
 #### RecurrenceStrategyDialog
 
@@ -404,12 +404,12 @@ Modal dialog for choosing recurrence strategy (single/upcoming/all).
 
 ##### Methods
 
-- `compose(self)` — No docstring provided.
-- `action_choose_single(self)` — No docstring provided.
-- `action_choose_upcoming(self)` — No docstring provided.
-- `action_choose_all(self)` — No docstring provided.
-- `action_choose_cancel(self)` — No docstring provided.
-- `on_button_pressed(self, event)` — No docstring provided.
+- `compose(self)` — Execute `compose`.
+- `action_choose_single(self)` — Handle the `choose_single` action.
+- `action_choose_upcoming(self)` — Handle the `choose_upcoming` action.
+- `action_choose_all(self)` — Handle the `choose_all` action.
+- `action_choose_cancel(self)` — Handle the `choose_cancel` action.
+- `on_button_pressed(self, event)` — Handle the `button_pressed` event callback.
 
 ### Functions
 
@@ -427,9 +427,9 @@ Up/Down navigate between form fields.
 
 ##### Methods
 
-- `action_accept_or_next(self)` — No docstring provided.
-- `action_focus_prev_field(self)` — No docstring provided.
-- `action_focus_next_field(self)` — No docstring provided.
+- `action_accept_or_next(self)` — Handle the `accept_or_next` action.
+- `action_focus_prev_field(self)` — Handle the `focus_prev_field` action.
+- `action_focus_next_field(self)` — Handle the `focus_next_field` action.
 - `_edit_focusable(self)` — Return ordered list of focusable edit widgets in the form.
 
 #### BoundaryTextArea
@@ -441,8 +441,8 @@ TextArea that moves focus to adjacent fields at cursor boundaries.
 
 ##### Methods
 
-- `action_cursor_up_or_prev(self)` — No docstring provided.
-- `action_cursor_down_or_next(self)` — No docstring provided.
+- `action_cursor_up_or_prev(self)` — Handle the `cursor_up_or_prev` action.
+- `action_cursor_down_or_next(self)` — Handle the `cursor_down_or_next` action.
 - `_edit_focusable(self)` — Return ordered list of focusable edit widgets in the form.
 
 #### LabelSuggester
@@ -451,8 +451,8 @@ Suggest label completions for the last comma-separated token.
 
 ##### Methods
 
-- `__init__(self, label_names)` — No docstring provided.
-- `get_suggestion(self, value)` — No docstring provided.
+- `__init__(self, label_names)` — Initialize the LabelSuggester instance.
+- `get_suggestion(self, value)` — Execute `get_suggestion`.
 
 #### UserSuggester
 
@@ -460,8 +460,8 @@ Suggest user names for the last comma-separated token.
 
 ##### Methods
 
-- `__init__(self, display_names)` — No docstring provided.
-- `get_suggestion(self, value)` — No docstring provided.
+- `__init__(self, display_names)` — Initialize the UserSuggester instance.
+- `get_suggestion(self, value)` — Execute `get_suggestion`.
 
 #### ReminderInput
 
@@ -473,15 +473,15 @@ Editable representation of an appointment for the detail panel.
 
 ##### Methods
 
-- `__post_init__(self)` — No docstring provided.
-- `from_appointment(cls, appt, *, label_directory=None, display_timezone=DEFAULT_DISPLAY_TZ)` — No docstring provided.
-- `_hydrate_from_appointment(self)` — No docstring provided.
-- `_format_dt(self, value)` — No docstring provided.
-- `apply_reminder(self, value, unit=None)` — No docstring provided.
-- `apply_label_tokens(self, tokens)` — No docstring provided.
-- `validate_temporal_ordering(self)` — No docstring provided.
-- `_parse_required(self, date_text, time_text, label, errors)` — No docstring provided.
-- `_parse_optional(self, date_text, time_text, errors)` — No docstring provided.
+- `__post_init__(self)` — Internal helper for `_post_init__`.
+- `from_appointment(cls, appt, *, label_directory=None, display_timezone=DEFAULT_DISPLAY_TZ)` — Execute `from_appointment`.
+- `_hydrate_from_appointment(self)` — Internal helper for `hydrate_from_appointment`.
+- `_format_dt(self, value)` — Internal helper for `format_dt`.
+- `apply_reminder(self, value, unit=None)` — Execute `apply_reminder`.
+- `apply_label_tokens(self, tokens)` — Execute `apply_label_tokens`.
+- `validate_temporal_ordering(self)` — Execute `validate_temporal_ordering`.
+- `_parse_required(self, date_text, time_text, label, errors)` — Internal helper for `parse_required`.
+- `_parse_optional(self, date_text, time_text, errors)` — Internal helper for `parse_optional`.
 
 #### DetailPanel
 
@@ -489,12 +489,13 @@ Right-side panel showing appointment details with edit mode support.
 
 ##### Methods
 
-- `__init__(self, **kwargs)` — No docstring provided.
-- `edit_mode(self)` — No docstring provided.
-- `create_mode(self)` — No docstring provided.
-- `dirty(self)` — No docstring provided.
-- `current_appointment(self)` — No docstring provided.
-- `compose(self)` — No docstring provided.
+- `__init__(self, **kwargs)` — Initialize the DetailPanel instance.
+- `_welcome_message(self)` — Return the canonical welcome text for empty detail state.
+- `edit_mode(self)` — Execute `edit_mode`.
+- `create_mode(self)` — Execute `create_mode`.
+- `dirty(self)` — Execute `dirty`.
+- `current_appointment(self)` — Execute `current_appointment`.
+- `compose(self)` — Execute `compose`.
 - `show_appointment(self, appt, label_service=None, display_tz=None)` — Display appointment in read-only mode.
 - `_fmt_dt(self, dt)` — Format a datetime in the configured display timezone using the shared formatter.
 - `_render_read_only(self, appt, label_service=None)` — Render all fields as read-only with .field-label CSS styling.
@@ -525,11 +526,11 @@ Returns (valid_ids, invalid_names).
 - `_ensure_read_only_content(self)` — Ensure #detail-content exists, then re-render the current appointment.
 - `_show_help_content(self, content)` — Write help text into the given Static widget.
 - `show_help(self)` — Display help text when no appointment is selected.
-- `set_focus_state(self, focused)` — No docstring provided.
-- `focus_content(self)` — No docstring provided.
-- `_restore_focus_target(self)` — No docstring provided.
-- `_capture_focus_target(self)` — No docstring provided.
-- `_ensure_arrow_indicator(self)` — No docstring provided.
+- `set_focus_state(self, focused)` — Execute `set_focus_state`.
+- `focus_content(self)` — Execute `focus_content`.
+- `_restore_focus_target(self)` — Internal helper for `restore_focus_target`.
+- `_capture_focus_target(self)` — Internal helper for `capture_focus_target`.
+- `_ensure_arrow_indicator(self)` — Internal helper for `ensure_arrow_indicator`.
 
 ### Functions
 
@@ -549,27 +550,27 @@ Filter bar with dynamic label toggles, date range, and search toggles.
 
 ##### Methods
 
-- `__init__(self, labels=None, default_label_ids=None, default_start='', default_end='', include_description=False, controls=None, **kwargs)` — No docstring provided.
-- `compose(self)` — No docstring provided.
-- `_normalize_label_refs(self, labels)` — No docstring provided.
-- `_iter_label_buttons(self)` — No docstring provided.
-- `_create_label_button(self, label)` — No docstring provided.
-- `update_labels(self, labels)` — No docstring provided.
-- `_swap_label_buttons(self)` — No docstring provided.
-- `selected_label_ids(self)` — No docstring provided.
-- `start_date(self)` — No docstring provided.
-- `end_date(self)` — No docstring provided.
-- `search_in_description(self)` — No docstring provided.
-- `on_input_changed(self, event)` — No docstring provided.
-- `on_input_submitted(self, event)` — No docstring provided.
-- `on_descendant_blur(self, event)` — No docstring provided.
-- `on_button_pressed(self, event)` — No docstring provided.
-- `on_switch_changed(self, event)` — No docstring provided.
-- `toggle_label(self, label_id)` — No docstring provided.
-- `set_focus_state(self, focused)` — No docstring provided.
-- `focus_start_date(self)` — No docstring provided.
-- `focus_end_date(self)` — No docstring provided.
-- `focus_search(self)` — No docstring provided.
+- `__init__(self, labels=None, default_label_ids=None, default_start='', default_end='', include_description=False, controls=None, **kwargs)` — Initialize the FilterBar instance.
+- `compose(self)` — Execute `compose`.
+- `_normalize_label_refs(self, labels)` — Internal helper for `normalize_label_refs`.
+- `_iter_label_buttons(self)` — Internal helper for `iter_label_buttons`.
+- `_create_label_button(self, label)` — Internal helper for `create_label_button`.
+- `update_labels(self, labels)` — Execute `update_labels`.
+- `_swap_label_buttons(self)` — Internal helper for `swap_label_buttons`.
+- `selected_label_ids(self)` — Execute `selected_label_ids`.
+- `start_date(self)` — Execute `start_date`.
+- `end_date(self)` — Execute `end_date`.
+- `search_in_description(self)` — Execute `search_in_description`.
+- `on_input_changed(self, event)` — Handle the `input_changed` event callback.
+- `on_input_submitted(self, event)` — Handle the `input_submitted` event callback.
+- `on_descendant_blur(self, event)` — Handle the `descendant_blur` event callback.
+- `on_button_pressed(self, event)` — Handle the `button_pressed` event callback.
+- `on_switch_changed(self, event)` — Handle the `switch_changed` event callback.
+- `toggle_label(self, label_id)` — Execute `toggle_label`.
+- `set_focus_state(self, focused)` — Execute `set_focus_state`.
+- `focus_start_date(self)` — Execute `focus_start_date`.
+- `focus_end_date(self)` — Execute `focus_end_date`.
+- `focus_search(self)` — Execute `focus_search`.
 
 ## cli/widgets/state.py
 
@@ -585,11 +586,11 @@ Track active panes and focus targets for keyboard navigation.
 
 ##### Methods
 
-- `set_active_panel(self, panel, focused_widget_id=None)` — No docstring provided.
-- `set_list_cursor(self, appointment_id)` — No docstring provided.
-- `focus_filter_index(self, index)` — No docstring provided.
-- `advance_filter_focus(self, step=1)` — No docstring provided.
-- `reset_filter_focus(self)` — No docstring provided.
+- `set_active_panel(self, panel, focused_widget_id=None)` — Execute `set_active_panel`.
+- `set_list_cursor(self, appointment_id)` — Execute `set_list_cursor`.
+- `focus_filter_index(self, index)` — Execute `focus_filter_index`.
+- `advance_filter_focus(self, step=1)` — Execute `advance_filter_focus`.
+- `reset_filter_focus(self)` — Execute `reset_filter_focus`.
 
 #### FilterControls
 
@@ -597,15 +598,15 @@ Persist filter inputs and label preview state.
 
 ##### Methods
 
-- `__post_init__(self)` — No docstring provided.
-- `visible_labels(self)` — No docstring provided.
-- `hidden_label_count(self)` — No docstring provided.
-- `expand_labels(self)` — No docstring provided.
-- `collapse_to_preview(self)` — No docstring provided.
-- `toggle_label(self, label_id)` — No docstring provided.
-- `register_shortcut_focus(self, widget_id)` — No docstring provided.
-- `set_available_labels(self, labels)` — No docstring provided.
-- `reset(self)` — No docstring provided.
+- `__post_init__(self)` — Internal helper for `_post_init__`.
+- `visible_labels(self)` — Execute `visible_labels`.
+- `hidden_label_count(self)` — Execute `hidden_label_count`.
+- `expand_labels(self)` — Execute `expand_labels`.
+- `collapse_to_preview(self)` — Execute `collapse_to_preview`.
+- `toggle_label(self, label_id)` — Execute `toggle_label`.
+- `register_shortcut_focus(self, widget_id)` — Execute `register_shortcut_focus`.
+- `set_available_labels(self, labels)` — Execute `set_available_labels`.
+- `reset(self)` — Execute `reset`.
 
 ## framework/__init__.py
 
@@ -623,7 +624,7 @@ Persist filter inputs and label preview state.
 
 #### Appointment
 
-No docstring provided.
+Container class `Appointment`.
 
 ##### Methods
 
@@ -647,7 +648,7 @@ dict
 ### Functions
 
 - `validate_reminder_minutes(total_minutes)` — Ensure reminder minutes remain within the backend's 0–10 080 minute window.
-- `convert_reminder_to_minutes(value, unit)` — No docstring provided.
+- `convert_reminder_to_minutes(value, unit)` — Execute `convert_reminder_to_minutes`.
 
 ## framework/client.py
 
@@ -759,8 +760,8 @@ Returns
 -------
 list
     A list of appointment JSON objects.
-- `delete_appointment(self, id_, strategy='all', time_=None, retries=2, backoff=1.0)` — No docstring provided.
-- `list_labels(self, organization_id, label_type='normal')` — No docstring provided.
+- `delete_appointment(self, id_, strategy='all', time_=None, retries=2, backoff=1.0)` — Execute `delete_appointment`.
+- `list_labels(self, organization_id, label_type='normal')` — Execute `list_labels`.
 - `list_users(self, organization_id)` — Fetch all users for an organization.
 
 API: ``GET /users?organization={organization_id}``
@@ -775,19 +776,19 @@ Configuration for the Excel import workflow ([import] section).
 
 #### AppConfig
 
-No docstring provided.
+Container class `AppConfig`.
 
 ### Functions
 
-- `load_config(path=Path('.groupalarm.toml'))` — No docstring provided.
-- `save_config(config, path=Path('.groupalarm.toml'))` — No docstring provided.
+- `load_config(path=Path('.groupalarm.toml'))` — Execute `load_config`.
+- `save_config(config, path=Path('.groupalarm.toml'))` — Execute `save_config`.
 
 ## framework/exporter.py
 
 ### Functions
 
-- `_format_datetime(dt, tz_name)` — No docstring provided.
-- `export_appointments(appointments, output_path, timezone='Europe/Berlin')` — No docstring provided.
+- `_format_datetime(dt, tz_name)` — Internal helper for `format_datetime`.
+- `export_appointments(appointments, output_path, timezone='Europe/Berlin')` — Execute `export_appointments`.
 
 ## framework/importer_token.py
 
@@ -875,7 +876,7 @@ sheet_name : str, optional
     Sheet name to read (default: first sheet).
 date_column : str, optional
     Optional column name used to filter out rows with missing dates.
-- `_load(self)` — No docstring provided.
+- `_load(self)` — Internal helper for `load`.
 - `rows(self)` — Yield rows as :class:`pandas.Series` objects.
 
 Yields
@@ -908,7 +909,7 @@ date_column : str, optional
     Optional column name used to filter out rows with missing dates.
 encoding : str, optional
     Preferred encoding to try first when reading (default: 'cp1252').
-- `_load(self)` — No docstring provided.
+- `_load(self)` — Internal helper for `load`.
 - `rows(self)` — Yield rows as :class:`pandas.Series` objects.
 
 Yields
@@ -924,14 +925,14 @@ If ``column`` does not exist it will be created.
 
 ### Functions
 
-- `map_labels_from_participants(text, token_map=None)` — Map a free-text participants cell to a list of label IDs.
+- `map_labels_from_participants(text, token_map)` — Map a free-text participants cell to a list of label IDs.
 
     Parameters
     ----------
     text : str
         Free-text participants field (may contain tokens separated by commas, semicolons or newlines).
-    token_map : dict, optional
-        Mapping from token strings to label id(s). Defaults to :data:`DEFAULT_TOKEN_MAP`.
+    token_map : dict
+        Mapping from token strings to label id(s).
 
     Returns
     -------
@@ -948,7 +949,7 @@ If ``column`` does not exist it will be created.
     >>> s = "1.TZ/B
 1.TZ/FGr N
 1.TZ/ZTr TZ TZ"
-    >>> map_labels_from_participants(s)
+    >>> map_labels_from_participants(s, {"1.TZ/B": 40427, "1.TZ/FGr N": 40433, "1.TZ/ZTr TZ": 40436})
     [40427, 40433, 40436]
 
 ## framework/log_sanitizer.py
@@ -961,8 +962,8 @@ Logging filter that replaces the API key in log messages with '***'.
 
 ##### Methods
 
-- `__init__(self, api_key)` — No docstring provided.
-- `filter(self, record)` — No docstring provided.
+- `__init__(self, api_key)` — Initialize the ApiKeySanitizer instance.
+- `filter(self, record)` — Execute `filter`.
 
 ### Functions
 
@@ -1122,8 +1123,8 @@ Returns
 -------
 datetime
     The computed notification datetime.
-- `_get_zoneinfo(tz_name)` — No docstring provided.
-- `_ensure_aware(dt)` — No docstring provided.
+- `_get_zoneinfo(tz_name)` — Internal helper for `get_zoneinfo`.
+- `_ensure_aware(dt)` — Internal helper for `ensure_aware`.
 - `format_de_datetime(dt, *, tz_name=DEFAULT_DISPLAY_TZ, fallback_format=DE_DATETIME_FORMAT)` — Format a datetime for German display, returning a fallback when conversion fails.
 - `parse_de_datetime(date_text, time_text, *, tz_name=DEFAULT_DISPLAY_TZ)` — Parse German date/time fragments into an aware datetime.
 - `clean_text(text, remove_newlines=True, collapse_whitespace=True)` — Normalize and clean a text value.
@@ -1152,7 +1153,19 @@ bar')
 
 ### Functions
 
-- `main()` — No docstring provided.
+- `main()` — Execute `main`.
+
+## import.example.py
+
+### Functions
+
+- `_map_labels_from_framework(text, token_map)` — Delegate label mapping to framework.label_mapper at runtime.
+
+## import_THWin_Dienstplan_productive.py
+
+### Functions
+
+- `_map_labels_from_framework(text, token_map)` — Delegate label mapping to framework.label_mapper at runtime.
 
 ## scripts/generate_api_docs.py
 
@@ -1160,57 +1173,57 @@ bar')
 
 #### FunctionDoc
 
-No docstring provided.
+Container class `FunctionDoc`.
 
 #### ClassDoc
 
-No docstring provided.
+Container class `ClassDoc`.
 
 #### ModuleDoc
 
-No docstring provided.
+Container class `ModuleDoc`.
 
 ##### Methods
 
-- `module_heading(self)` — No docstring provided.
+- `module_heading(self)` — Execute `module_heading`.
 
 ### Functions
 
-- `safe_unparse(node)` — No docstring provided.
-- `clean_docstring(value)` — No docstring provided.
-- `should_skip(path)` — No docstring provided.
-- `format_arguments(args)` — No docstring provided.
-- `build_function_doc(node)` — No docstring provided.
-- `build_class_doc(node)` — No docstring provided.
-- `parse_module(path, *, root)` — No docstring provided.
-- `iter_python_files(root)` — No docstring provided.
-- `render_markdown(modules)` — No docstring provided.
-- `generate_docs(root, output)` — No docstring provided.
-- `parse_args()` — No docstring provided.
-- `main()` — No docstring provided.
+- `safe_unparse(node)` — Execute `safe_unparse`.
+- `clean_docstring(value)` — Execute `clean_docstring`.
+- `should_skip(path)` — Execute `should_skip`.
+- `format_arguments(args)` — Execute `format_arguments`.
+- `build_function_doc(node)` — Execute `build_function_doc`.
+- `build_class_doc(node)` — Execute `build_class_doc`.
+- `parse_module(path, *, root)` — Execute `parse_module`.
+- `iter_python_files(root)` — Execute `iter_python_files`.
+- `render_markdown(modules)` — Execute `render_markdown`.
+- `generate_docs(root, output)` — Execute `generate_docs`.
+- `parse_args()` — Execute `parse_args`.
+- `main()` — Execute `main`.
 
 ## tests/conftest.py
 
 ### Functions
 
-- `_load_fixtures()` — No docstring provided.
-- `_transform_appointment(record)` — No docstring provided.
-- `tui_sample_data()` — No docstring provided.
-- `mock_client(tui_sample_data)` — No docstring provided.
+- `_load_fixtures()` — Internal helper for `load_fixtures`.
+- `_transform_appointment(record)` — Internal helper for `transform_appointment`.
+- `tui_sample_data()` — Execute `tui_sample_data`.
+- `mock_client(tui_sample_data)` — Execute `mock_client`.
 - `pilot_app(mock_client)` — Run the Textual pilot once per test for keyboard-centric suites.
-- `focus_widget()` — No docstring provided.
+- `focus_widget()` — Execute `focus_widget`.
 
 ## tests/test_app.py
 
 ### Functions
 
-- `_make_mock_client()` — No docstring provided.
-- `_make_app(client=None, dry_run=False, show_startup_welcome=True)` — No docstring provided.
+- `_make_mock_client()` — Internal helper for `make_mock_client`.
+- `_make_app(client=None, dry_run=False, show_startup_welcome=True)` — Internal helper for `make_app`.
 - `test_app_startup_loads_appointments()` — T017: Verify app starts and appointment list is populated.
 - `test_app_startup_calls_list_labels()` — T017: Verify labels are fetched on startup.
-- `test_startup_welcome_stays_visible_until_explicit_selection()` — No docstring provided.
-- `test_startup_welcome_disabled_keeps_live_preview_behavior()` — No docstring provided.
-- `test_command_palette_toggle_persists_startup_welcome(monkeypatch)` — No docstring provided.
+- `test_startup_welcome_stays_visible_until_explicit_selection()` — Test `startup_welcome_stays_visible_until_explicit_selection` behavior.
+- `test_startup_welcome_disabled_keeps_live_preview_behavior()` — Test `startup_welcome_disabled_keeps_live_preview_behavior` behavior.
+- `test_command_palette_toggle_persists_startup_welcome(monkeypatch)` — Test `command_palette_toggle_persists_startup_welcome` behavior.
 - `test_search_filters_appointments()` — T018: Verify search narrows the appointment list.
 - `test_search_no_match_shows_empty()` — T019: Verify search with no match shows empty list.
 - `test_description_search_requires_toggle()` — T018: Description field is searched only when toggle is enabled.
@@ -1238,11 +1251,11 @@ No docstring provided.
 
 ### Functions
 
-- `_make_appt(**kwargs)` — No docstring provided.
-- `test_recurrence_defaults_to_none()` — No docstring provided.
-- `test_recurrence_populated_from_dict()` — No docstring provided.
-- `test_recurrence_not_in_api_payload()` — No docstring provided.
-- `test_recurrence_none_not_in_payload()` — No docstring provided.
+- `_make_appt(**kwargs)` — Internal helper for `make_appt`.
+- `test_recurrence_defaults_to_none()` — Test `recurrence_defaults_to_none` behavior.
+- `test_recurrence_populated_from_dict()` — Test `recurrence_populated_from_dict` behavior.
+- `test_recurrence_not_in_api_payload()` — Test `recurrence_not_in_api_payload` behavior.
+- `test_recurrence_none_not_in_payload()` — Test `recurrence_none_not_in_payload` behavior.
 
 ## tests/test_appointment_list.py
 
@@ -1250,7 +1263,7 @@ No docstring provided.
 
 - `test_list_timestamp_uses_german_format()` — T023: Verify list-view timestamps render as dd.mm.yyyy HH:MM.
 - `test_list_timestamp_fallback_on_invalid_timezone()` — T023: Conversion failure returns raw ISO and a warning.
-- `_make_app()` — No docstring provided.
+- `_make_app()` — Internal helper for `make_app`.
 - `test_appointment_list_renders_german_timestamps()` — T023: List rows display timestamps in dd.mm.yyyy HH:MM format.
 
 ## tests/test_appointment_service.py
@@ -1259,63 +1272,63 @@ No docstring provided.
 
 #### _ClientStub
 
-No docstring provided.
+Container class `_ClientStub`.
 
 ##### Methods
 
-- `__init__(self)` — No docstring provided.
-- `create_appointment(self, appt)` — No docstring provided.
+- `__init__(self)` — Initialize the _ClientStub instance.
+- `create_appointment(self, appt)` — Execute `create_appointment`.
 
 ### Functions
 
-- `_appt(description)` — No docstring provided.
-- `test_manual_create_adds_importer_token()` — No docstring provided.
-- `test_manual_create_preserves_existing_token_without_duplication()` — No docstring provided.
+- `_appt(description)` — Internal helper for `appt`.
+- `test_manual_create_adds_importer_token()` — Test `manual_create_adds_importer_token` behavior.
+- `test_manual_create_preserves_existing_token_without_duplication()` — Test `manual_create_preserves_existing_token_without_duplication` behavior.
 
 ## tests/test_client.py
 
 ### Functions
 
-- `make_appt()` — No docstring provided.
-- `test_create_appointment_dry_run_no_token()` — No docstring provided.
-- `test_create_appointment_requires_token_when_not_dry()` — No docstring provided.
-- `test_create_appointment_posts(monkeypatch)` — No docstring provided.
-- `test_update_appointment_dry_run_no_token()` — No docstring provided.
-- `test_update_appointment_requires_token_when_not_dry()` — No docstring provided.
-- `test_update_appointment_puts(monkeypatch)` — No docstring provided.
-- `test_get_appointment_dry_run_no_token()` — No docstring provided.
-- `test_get_appointment_not_found_raises(monkeypatch)` — No docstring provided.
-- `test_update_appointment_raises_not_found(monkeypatch)` — No docstring provided.
-- `test_get_appointment_returns_json(monkeypatch)` — No docstring provided.
-- `test_list_labels_returns_labels(monkeypatch)` — No docstring provided.
-- `test_list_labels_with_type(monkeypatch)` — No docstring provided.
-- `test_delete_appointment_dry_run()` — No docstring provided.
-- `test_delete_appointment_requires_token()` — No docstring provided.
-- `test_delete_appointment_sends_delete(monkeypatch)` — No docstring provided.
-- `test_delete_appointment_with_strategy(monkeypatch)` — No docstring provided.
-- `test_delete_appointment_invalid_strategy()` — No docstring provided.
-- `test_delete_appointment_not_found(monkeypatch)` — No docstring provided.
-- `test_update_appointment_with_strategy(monkeypatch)` — No docstring provided.
-- `test_update_appointment_default_strategy_no_param(monkeypatch)` — No docstring provided.
-- `test_update_appointment_invalid_strategy()` — No docstring provided.
+- `make_appt()` — Execute `make_appt`.
+- `test_create_appointment_dry_run_no_token()` — Test `create_appointment_dry_run_no_token` behavior.
+- `test_create_appointment_requires_token_when_not_dry()` — Test `create_appointment_requires_token_when_not_dry` behavior.
+- `test_create_appointment_posts(monkeypatch)` — Test `create_appointment_posts` behavior.
+- `test_update_appointment_dry_run_no_token()` — Test `update_appointment_dry_run_no_token` behavior.
+- `test_update_appointment_requires_token_when_not_dry()` — Test `update_appointment_requires_token_when_not_dry` behavior.
+- `test_update_appointment_puts(monkeypatch)` — Test `update_appointment_puts` behavior.
+- `test_get_appointment_dry_run_no_token()` — Test `get_appointment_dry_run_no_token` behavior.
+- `test_get_appointment_not_found_raises(monkeypatch)` — Test `get_appointment_not_found_raises` behavior.
+- `test_update_appointment_raises_not_found(monkeypatch)` — Test `update_appointment_raises_not_found` behavior.
+- `test_get_appointment_returns_json(monkeypatch)` — Test `get_appointment_returns_json` behavior.
+- `test_list_labels_returns_labels(monkeypatch)` — Test `list_labels_returns_labels` behavior.
+- `test_list_labels_with_type(monkeypatch)` — Test `list_labels_with_type` behavior.
+- `test_delete_appointment_dry_run()` — Test `delete_appointment_dry_run` behavior.
+- `test_delete_appointment_requires_token()` — Test `delete_appointment_requires_token` behavior.
+- `test_delete_appointment_sends_delete(monkeypatch)` — Test `delete_appointment_sends_delete` behavior.
+- `test_delete_appointment_with_strategy(monkeypatch)` — Test `delete_appointment_with_strategy` behavior.
+- `test_delete_appointment_invalid_strategy()` — Test `delete_appointment_invalid_strategy` behavior.
+- `test_delete_appointment_not_found(monkeypatch)` — Test `delete_appointment_not_found` behavior.
+- `test_update_appointment_with_strategy(monkeypatch)` — Test `update_appointment_with_strategy` behavior.
+- `test_update_appointment_default_strategy_no_param(monkeypatch)` — Test `update_appointment_default_strategy_no_param` behavior.
+- `test_update_appointment_invalid_strategy()` — Test `update_appointment_invalid_strategy` behavior.
 
 ## tests/test_config.py
 
 ### Functions
 
-- `test_load_missing_file_returns_defaults(tmp_path)` — No docstring provided.
-- `test_load_valid_toml(tmp_path)` — No docstring provided.
-- `test_load_invalid_toml_raises(tmp_path)` — No docstring provided.
-- `test_save_and_reload_roundtrip(tmp_path)` — No docstring provided.
-- `test_organization_id_none_when_missing(tmp_path)` — No docstring provided.
-- `test_unknown_keys_ignored(tmp_path)` — No docstring provided.
+- `test_load_missing_file_returns_defaults(tmp_path)` — Test `load_missing_file_returns_defaults` behavior.
+- `test_load_valid_toml(tmp_path)` — Test `load_valid_toml` behavior.
+- `test_load_invalid_toml_raises(tmp_path)` — Test `load_invalid_toml_raises` behavior.
+- `test_save_and_reload_roundtrip(tmp_path)` — Test `save_and_reload_roundtrip` behavior.
+- `test_organization_id_none_when_missing(tmp_path)` — Test `organization_id_none_when_missing` behavior.
+- `test_unknown_keys_ignored(tmp_path)` — Test `unknown_keys_ignored` behavior.
 
 ## tests/test_confirmation.py
 
 ### Functions
 
-- `_make_mock_client()` — No docstring provided.
-- `_make_app(client=None, dry_run=False)` — No docstring provided.
+- `_make_mock_client()` — Internal helper for `make_mock_client`.
+- `_make_app(client=None, dry_run=False)` — Internal helper for `make_app`.
 - `test_confirmation_dialog_confirm()` — T031: Verify confirmation dialog returns True on confirm.
 - `test_confirmation_dialog_cancel()` — T031: Verify confirmation dialog returns False on cancel.
 - `test_unsaved_changes_dialog_save()` — T032: Verify unsaved changes dialog returns 'save'.
@@ -1333,7 +1346,7 @@ No docstring provided.
 
 ### Functions
 
-- `_sample_appointment()` — No docstring provided.
+- `_sample_appointment()` — Internal helper for `sample_appointment`.
 - `test_edit_form_state_formats_datetimes_in_german_locale()` — T016: Ensure EditFormState splits German-formatted timestamps.
 - `test_edit_form_state_validates_temporal_ordering()` — T016: Validate start/end ordering and notification timing.
 - `test_edit_form_state_reminder_conversion_guardrail()` — T016: Reminder conversion enforces API guardrails.
@@ -1347,12 +1360,12 @@ No docstring provided.
 
 ### Functions
 
-- `_make_appt(id_=1, name='Test', description='desc [GA-IMPORTER:aabbccdd|20260101120000|abcd]')` — No docstring provided.
-- `test_export_creates_xlsx_with_13_columns(tmp_path)` — No docstring provided.
-- `test_export_contains_groupalarm_id_and_token(tmp_path)` — No docstring provided.
-- `test_export_empty_list_raises(tmp_path)` — No docstring provided.
-- `test_export_multiple_appointments(tmp_path)` — No docstring provided.
-- `test_export_appointment_without_token(tmp_path)` — No docstring provided.
+- `_make_appt(id_=1, name='Test', description='desc [GA-IMPORTER:aabbccdd|20260101120000|abcd]')` — Internal helper for `make_appt`.
+- `test_export_creates_xlsx_with_13_columns(tmp_path)` — Test `export_creates_xlsx_with_13_columns` behavior.
+- `test_export_contains_groupalarm_id_and_token(tmp_path)` — Test `export_contains_groupalarm_id_and_token` behavior.
+- `test_export_empty_list_raises(tmp_path)` — Test `export_empty_list_raises` behavior.
+- `test_export_multiple_appointments(tmp_path)` — Test `export_multiple_appointments` behavior.
+- `test_export_appointment_without_token(tmp_path)` — Test `export_appointment_without_token` behavior.
 
 ## tests/test_filter_bar.py
 
@@ -1360,19 +1373,19 @@ No docstring provided.
 
 #### _FilterBarTestApp
 
-No docstring provided.
+Container class `_FilterBarTestApp`.
 
 ##### Methods
 
-- `__init__(self, widget)` — No docstring provided.
-- `compose(self)` — No docstring provided.
+- `__init__(self, widget)` — Initialize the _FilterBarTestApp instance.
+- `compose(self)` — Execute `compose`.
 
 ### Functions
 
-- `_make_labels(count, zero_ids=None)` — No docstring provided.
-- `test_filter_bar_shows_all_labels()` — No docstring provided.
-- `test_zero_match_labels_show_indicator()` — No docstring provided.
-- `test_shortcut_focus_works()` — No docstring provided.
+- `_make_labels(count, zero_ids=None)` — Internal helper for `make_labels`.
+- `test_filter_bar_shows_all_labels()` — Test `filter_bar_shows_all_labels` behavior.
+- `test_zero_match_labels_show_indicator()` — Test `zero_match_labels_show_indicator` behavior.
+- `test_shortcut_focus_works()` — Test `shortcut_focus_works` behavior.
 
 ## tests/test_import_config.py
 
@@ -1384,12 +1397,12 @@ Test load_config handling of the [import] TOML section.
 
 ##### Methods
 
-- `test_missing_import_section_returns_none(self, config_path)` — No docstring provided.
-- `test_empty_import_section_returns_empty_import_config(self, config_path)` — No docstring provided.
-- `test_mapping_file_set(self, config_path)` — No docstring provided.
-- `test_sheet_name_set(self, config_path)` — No docstring provided.
-- `test_both_fields_set(self, config_path)` — No docstring provided.
-- `test_existing_fields_unchanged(self, config_path)` — No docstring provided.
+- `test_missing_import_section_returns_none(self, config_path)` — Test `missing_import_section_returns_none` behavior.
+- `test_empty_import_section_returns_empty_import_config(self, config_path)` — Test `empty_import_section_returns_empty_import_config` behavior.
+- `test_mapping_file_set(self, config_path)` — Test `mapping_file_set` behavior.
+- `test_sheet_name_set(self, config_path)` — Test `sheet_name_set` behavior.
+- `test_both_fields_set(self, config_path)` — Test `both_fields_set` behavior.
+- `test_existing_fields_unchanged(self, config_path)` — Test `existing_fields_unchanged` behavior.
 
 #### TestImportConfigSaving
 
@@ -1397,10 +1410,10 @@ Test save_config round-trip for the [import] section.
 
 ##### Methods
 
-- `test_save_without_import_config(self, config_path)` — No docstring provided.
-- `test_save_with_import_config_round_trip(self, config_path)` — No docstring provided.
-- `test_save_import_config_none_fields_omitted(self, config_path)` — No docstring provided.
-- `test_save_import_config_partial(self, config_path)` — No docstring provided.
+- `test_save_without_import_config(self, config_path)` — Test `save_without_import_config` behavior.
+- `test_save_with_import_config_round_trip(self, config_path)` — Test `save_with_import_config_round_trip` behavior.
+- `test_save_import_config_none_fields_omitted(self, config_path)` — Test `save_import_config_none_fields_omitted` behavior.
+- `test_save_import_config_partial(self, config_path)` — Test `save_import_config_partial` behavior.
 
 #### TestImportConfigFrozen
 
@@ -1408,11 +1421,11 @@ ImportConfig must be frozen (immutable).
 
 ##### Methods
 
-- `test_frozen(self)` — No docstring provided.
+- `test_frozen(self)` — Test `frozen` behavior.
 
 ### Functions
 
-- `config_path(tmp_path)` — No docstring provided.
+- `config_path(tmp_path)` — Execute `config_path`.
 
 ## tests/test_import_preview_screen.py
 
@@ -1420,40 +1433,40 @@ ImportConfig must be frozen (immutable).
 
 #### _LabelServiceStub
 
-No docstring provided.
+Container class `_LabelServiceStub`.
 
 ##### Methods
 
-- `get_directory(self)` — No docstring provided.
-- `get_names_for_ids(self, label_ids)` — No docstring provided.
+- `get_directory(self)` — Execute `get_directory`.
+- `get_names_for_ids(self, label_ids)` — Execute `get_names_for_ids`.
 
 #### _ClientStub
 
-No docstring provided.
+Container class `_ClientStub`.
 
 #### _PreviewHostApp
 
-No docstring provided.
+Container class `_PreviewHostApp`.
 
 ##### Methods
 
-- `__init__(self, preview_screen)` — No docstring provided.
-- `on_mount(self)` — No docstring provided.
+- `__init__(self, preview_screen)` — Initialize the _PreviewHostApp instance.
+- `on_mount(self)` — Handle the `mount` event callback.
 
 #### _DialogHostApp
 
-No docstring provided.
+Container class `_DialogHostApp`.
 
 ##### Methods
 
-- `__init__(self, dialog)` — No docstring provided.
-- `on_mount(self)` — No docstring provided.
+- `__init__(self, dialog)` — Initialize the _DialogHostApp instance.
+- `on_mount(self)` — Handle the `mount` event callback.
 
 ### Functions
 
-- `_appt(appt_id, name)` — No docstring provided.
-- `test_preview_mount_navigation_filter_and_cancel(tmp_path)` — No docstring provided.
-- `test_import_file_dialog_validates_path(tmp_path)` — No docstring provided.
+- `_appt(appt_id, name)` — Internal helper for `appt`.
+- `test_preview_mount_navigation_filter_and_cancel(tmp_path)` — Test `preview_mount_navigation_filter_and_cancel` behavior.
+- `test_import_file_dialog_validates_path(tmp_path)` — Test `import_file_dialog_validates_path` behavior.
 
 ## tests/test_import_service.py
 
@@ -1465,48 +1478,48 @@ Minimal row object compatible with Mapper expectations.
 
 ##### Methods
 
-- `to_dict(self)` — No docstring provided.
+- `to_dict(self)` — Execute `to_dict`.
 
 #### _ImporterStub
 
-No docstring provided.
+Container class `_ImporterStub`.
 
 ##### Methods
 
-- `__init__(self, _filename, sheet_name=None)` — No docstring provided.
-- `rows(self)` — No docstring provided.
+- `__init__(self, _filename, sheet_name=None)` — Initialize the _ImporterStub instance.
+- `rows(self)` — Execute `rows`.
 
 #### _ClientStub
 
-No docstring provided.
+Container class `_ClientStub`.
 
 ##### Methods
 
-- `__init__(self)` — No docstring provided.
-- `create_appointment(self, appt)` — No docstring provided.
-- `update_appointment(self, appt)` — No docstring provided.
-- `list_appointments(self, start, end, type_='personal', organization_id=None)` — No docstring provided.
+- `__init__(self)` — Initialize the _ClientStub instance.
+- `create_appointment(self, appt)` — Execute `create_appointment`.
+- `update_appointment(self, appt)` — Execute `update_appointment`.
+- `list_appointments(self, start, end, type_='personal', organization_id=None)` — Execute `list_appointments`.
 
 ### Functions
 
-- `_iso(dt)` — No docstring provided.
-- `_tier1_row(name='Training A', *, appt_id=None, token='')` — No docstring provided.
-- `test_parse_excel_tier1_valid(monkeypatch, tmp_path)` — No docstring provided.
-- `test_parse_excel_tier1_skipped_rows(monkeypatch, tmp_path)` — No docstring provided.
-- `test_parse_excel_empty_file_raises(monkeypatch, tmp_path)` — No docstring provided.
-- `test_load_mapping_module_valid(tmp_path)` — No docstring provided.
-- `test_load_mapping_module_missing_file()` — No docstring provided.
-- `test_load_mapping_module_syntax_error(tmp_path)` — No docstring provided.
-- `test_load_mapping_module_missing_mapping_attr(tmp_path)` — No docstring provided.
-- `test_parse_excel_tier2_uses_mapping_file(monkeypatch, tmp_path)` — No docstring provided.
-- `_appt(name, appt_id=None, description='desc')` — No docstring provided.
-- `test_upload_create_and_update_paths()` — No docstring provided.
-- `test_upload_token_not_found_fails_no_create()` — No docstring provided.
-- `test_upload_id_without_token_fails_safely()` — No docstring provided.
-- `test_upload_ambiguous_token_match_fails()` — No docstring provided.
-- `test_upload_resolved_update_not_found_fails()` — No docstring provided.
-- `test_upload_failure_records_error()` — No docstring provided.
-- `test_upload_dry_run_no_api_calls()` — No docstring provided.
+- `_iso(dt)` — Internal helper for `iso`.
+- `_tier1_row(name='Training A', *, appt_id=None, token='')` — Internal helper for `tier1_row`.
+- `test_parse_excel_tier1_valid(monkeypatch, tmp_path)` — Test `parse_excel_tier1_valid` behavior.
+- `test_parse_excel_tier1_skipped_rows(monkeypatch, tmp_path)` — Test `parse_excel_tier1_skipped_rows` behavior.
+- `test_parse_excel_empty_file_raises(monkeypatch, tmp_path)` — Test `parse_excel_empty_file_raises` behavior.
+- `test_load_mapping_module_valid(tmp_path)` — Test `load_mapping_module_valid` behavior.
+- `test_load_mapping_module_missing_file()` — Test `load_mapping_module_missing_file` behavior.
+- `test_load_mapping_module_syntax_error(tmp_path)` — Test `load_mapping_module_syntax_error` behavior.
+- `test_load_mapping_module_missing_mapping_attr(tmp_path)` — Test `load_mapping_module_missing_mapping_attr` behavior.
+- `test_parse_excel_tier2_uses_mapping_file(monkeypatch, tmp_path)` — Test `parse_excel_tier2_uses_mapping_file` behavior.
+- `_appt(name, appt_id=None, description='desc')` — Internal helper for `appt`.
+- `test_upload_create_and_update_paths()` — Test `upload_create_and_update_paths` behavior.
+- `test_upload_token_not_found_fails_no_create()` — Test `upload_token_not_found_fails_no_create` behavior.
+- `test_upload_id_without_token_fails_safely()` — Test `upload_id_without_token_fails_safely` behavior.
+- `test_upload_ambiguous_token_match_fails()` — Test `upload_ambiguous_token_match_fails` behavior.
+- `test_upload_resolved_update_not_found_fails()` — Test `upload_resolved_update_not_found_fails` behavior.
+- `test_upload_failure_records_error()` — Test `upload_failure_records_error` behavior.
+- `test_upload_dry_run_no_api_calls()` — Test `upload_dry_run_no_api_calls` behavior.
 
 ## tests/test_import_summary.py
 
@@ -1514,95 +1527,95 @@ No docstring provided.
 
 #### _SummaryHostApp
 
-No docstring provided.
+Container class `_SummaryHostApp`.
 
 ##### Methods
 
-- `__init__(self, summary_screen)` — No docstring provided.
-- `on_mount(self)` — No docstring provided.
+- `__init__(self, summary_screen)` — Initialize the _SummaryHostApp instance.
+- `on_mount(self)` — Handle the `mount` event callback.
 
 ### Functions
 
-- `test_import_summary_screen_displays_counts_and_failures()` — No docstring provided.
-- `test_import_summary_screen_dry_run_title_and_dismiss()` — No docstring provided.
+- `test_import_summary_screen_displays_counts_and_failures()` — Test `import_summary_screen_displays_counts_and_failures` behavior.
+- `test_import_summary_screen_dry_run_title_and_dismiss()` — Test `import_summary_screen_dry_run_title_and_dismiss` behavior.
 
 ## tests/test_importer_token.py
 
 ### Functions
 
-- `test_create_and_find_token()` — No docstring provided.
-- `test_token_format_is_short()` — No docstring provided.
-- `test_find_none()` — No docstring provided.
+- `test_create_and_find_token()` — Test `create_and_find_token` behavior.
+- `test_token_format_is_short()` — Test `token_format_is_short` behavior.
+- `test_find_none()` — Test `find_none` behavior.
 
 ## tests/test_importers.py
 
 ### Functions
 
-- `test_csv_importer_reads_cp1252(tmp_path)` — No docstring provided.
-- `test_excel_importer_none_sheet_reads_first_sheet(monkeypatch)` — No docstring provided.
+- `test_csv_importer_reads_cp1252(tmp_path)` — Test `csv_importer_reads_cp1252` behavior.
+- `test_excel_importer_none_sheet_reads_first_sheet(monkeypatch)` — Test `excel_importer_none_sheet_reads_first_sheet` behavior.
 
 ## tests/test_label_mapper.py
 
 ### Functions
 
-- `test_map_labels_simple()` — No docstring provided.
-- `test_map_labels_multiple_and_duplicates()` — No docstring provided.
-- `test_map_labels_case_insensitive_and_substring()` — No docstring provided.
-- `test_map_labels_empty_returns_empty()` — No docstring provided.
+- `test_map_labels_simple()` — Test `map_labels_simple` behavior.
+- `test_map_labels_multiple_and_duplicates()` — Test `map_labels_multiple_and_duplicates` behavior.
+- `test_map_labels_case_insensitive_and_substring()` — Test `map_labels_case_insensitive_and_substring` behavior.
+- `test_map_labels_empty_returns_empty()` — Test `map_labels_empty_returns_empty` behavior.
 
 ## tests/test_log_sanitizer.py
 
 ### Functions
 
-- `test_sanitizer_replaces_key_in_message()` — No docstring provided.
-- `test_sanitizer_replaces_key_in_args()` — No docstring provided.
-- `test_sanitizer_passes_through_clean_messages()` — No docstring provided.
-- `test_install_adds_filter_to_root_logger()` — No docstring provided.
-- `test_install_with_empty_key_does_nothing()` — No docstring provided.
+- `test_sanitizer_replaces_key_in_message()` — Test `sanitizer_replaces_key_in_message` behavior.
+- `test_sanitizer_replaces_key_in_args()` — Test `sanitizer_replaces_key_in_args` behavior.
+- `test_sanitizer_passes_through_clean_messages()` — Test `sanitizer_passes_through_clean_messages` behavior.
+- `test_install_adds_filter_to_root_logger()` — Test `install_adds_filter_to_root_logger` behavior.
+- `test_install_with_empty_key_does_nothing()` — Test `install_with_empty_key_does_nothing` behavior.
 
 ## tests/test_mapper.py
 
 ### Functions
 
-- `test_mapper_parses_dates_and_labels()` — No docstring provided.
-- `test_name_cleaning_removes_newlines()` — No docstring provided.
+- `test_mapper_parses_dates_and_labels()` — Test `mapper_parses_dates_and_labels` behavior.
+- `test_name_cleaning_removes_newlines()` — Test `name_cleaning_removes_newlines` behavior.
 
 ## tests/test_navigation.py
 
 ### Functions
 
-- `_make_labels(count=7)` — No docstring provided.
-- `test_navigation_state_switches_active_panel()` — No docstring provided.
-- `test_navigation_state_tracks_cursor_and_filter_focus()` — No docstring provided.
-- `test_filter_controls_preview_and_expansion()` — No docstring provided.
-- `test_filter_controls_toggle_selection_and_cleanup()` — No docstring provided.
-- `test_filter_controls_tracks_shortcut_expansion()` — No docstring provided.
+- `_make_labels(count=7)` — Internal helper for `make_labels`.
+- `test_navigation_state_switches_active_panel()` — Test `navigation_state_switches_active_panel` behavior.
+- `test_navigation_state_tracks_cursor_and_filter_focus()` — Test `navigation_state_tracks_cursor_and_filter_focus` behavior.
+- `test_filter_controls_preview_and_expansion()` — Test `filter_controls_preview_and_expansion` behavior.
+- `test_filter_controls_toggle_selection_and_cleanup()` — Test `filter_controls_toggle_selection_and_cleanup` behavior.
+- `test_filter_controls_tracks_shortcut_expansion()` — Test `filter_controls_tracks_shortcut_expansion` behavior.
 
 ## tests/test_runner.py
 
 ### Functions
 
-- `test_runner_dry_run_does_not_require_token(tmp_path, caplog)` — No docstring provided.
-- `test_runner_non_dry_run_calls_client(monkeypatch, tmp_path)` — No docstring provided.
-- `test_runner_calls_update_when_id_present(monkeypatch, tmp_path)` — No docstring provided.
-- `test_runner_writes_id_back_on_create(monkeypatch, tmp_path)` — No docstring provided.
-- `test_runner_writes_id_back_on_update(monkeypatch, tmp_path)` — No docstring provided.
-- `test_runner_creates_token_on_update_when_missing(monkeypatch, tmp_path)` — No docstring provided.
-- `test_runner_writes_token_and_id_on_create(monkeypatch, tmp_path)` — No docstring provided.
-- `test_runner_token_lookup_on_update(monkeypatch, tmp_path)` — No docstring provided.
+- `test_runner_dry_run_does_not_require_token(tmp_path, caplog)` — Test `runner_dry_run_does_not_require_token` behavior.
+- `test_runner_non_dry_run_calls_client(monkeypatch, tmp_path)` — Test `runner_non_dry_run_calls_client` behavior.
+- `test_runner_calls_update_when_id_present(monkeypatch, tmp_path)` — Test `runner_calls_update_when_id_present` behavior.
+- `test_runner_writes_id_back_on_create(monkeypatch, tmp_path)` — Test `runner_writes_id_back_on_create` behavior.
+- `test_runner_writes_id_back_on_update(monkeypatch, tmp_path)` — Test `runner_writes_id_back_on_update` behavior.
+- `test_runner_creates_token_on_update_when_missing(monkeypatch, tmp_path)` — Test `runner_creates_token_on_update_when_missing` behavior.
+- `test_runner_writes_token_and_id_on_create(monkeypatch, tmp_path)` — Test `runner_writes_token_and_id_on_create` behavior.
+- `test_runner_token_lookup_on_update(monkeypatch, tmp_path)` — Test `runner_token_lookup_on_update` behavior.
 
 ## tests/test_utils.py
 
 ### Functions
 
-- `test_parse_date_with_format_and_tz()` — No docstring provided.
-- `test_parse_date_with_hour_only()` — No docstring provided.
-- `test_relative_notification()` — No docstring provided.
-- `test_format_de_datetime_converts_utc_to_berlin()` — No docstring provided.
-- `test_format_de_datetime_falls_back_on_invalid_timezone()` — No docstring provided.
-- `test_format_de_datetime_handles_dst_transition()` — No docstring provided.
-- `test_format_de_datetime_warns_for_naive_datetime_with_bad_timezone()` — No docstring provided.
-- `test_parse_de_datetime_returns_aware_datetime()` — No docstring provided.
-- `test_reminder_conversion_uses_expected_factors()` — No docstring provided.
-- `test_reminder_conversion_rejects_unknown_units()` — No docstring provided.
-- `test_validate_reminder_minutes_guardrail()` — No docstring provided.
+- `test_parse_date_with_format_and_tz()` — Test `parse_date_with_format_and_tz` behavior.
+- `test_parse_date_with_hour_only()` — Test `parse_date_with_hour_only` behavior.
+- `test_relative_notification()` — Test `relative_notification` behavior.
+- `test_format_de_datetime_converts_utc_to_berlin()` — Test `format_de_datetime_converts_utc_to_berlin` behavior.
+- `test_format_de_datetime_falls_back_on_invalid_timezone()` — Test `format_de_datetime_falls_back_on_invalid_timezone` behavior.
+- `test_format_de_datetime_handles_dst_transition()` — Test `format_de_datetime_handles_dst_transition` behavior.
+- `test_format_de_datetime_warns_for_naive_datetime_with_bad_timezone()` — Test `format_de_datetime_warns_for_naive_datetime_with_bad_timezone` behavior.
+- `test_parse_de_datetime_returns_aware_datetime()` — Test `parse_de_datetime_returns_aware_datetime` behavior.
+- `test_reminder_conversion_uses_expected_factors()` — Test `reminder_conversion_uses_expected_factors` behavior.
+- `test_reminder_conversion_rejects_unknown_units()` — Test `reminder_conversion_rejects_unknown_units` behavior.
+- `test_validate_reminder_minutes_guardrail()` — Test `validate_reminder_minutes_guardrail` behavior.

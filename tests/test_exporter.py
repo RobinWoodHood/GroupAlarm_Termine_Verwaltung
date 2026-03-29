@@ -8,6 +8,7 @@ from framework.exporter import export_appointments, COLUMNS
 
 
 def _make_appt(id_=1, name="Test", description="desc [GA-IMPORTER:aabbccdd|20260101120000|abcd]"):
+    """Internal helper for `make_appt`."""
     return Appointment(
         name=name,
         description=description,
@@ -22,6 +23,7 @@ def _make_appt(id_=1, name="Test", description="desc [GA-IMPORTER:aabbccdd|20260
 
 
 def test_export_creates_xlsx_with_13_columns(tmp_path):
+    """Test `export_creates_xlsx_with_13_columns` behavior."""
     path = tmp_path / "test.xlsx"
     result = export_appointments([_make_appt()], path)
     assert result == path
@@ -36,6 +38,7 @@ def test_export_creates_xlsx_with_13_columns(tmp_path):
 
 
 def test_export_contains_groupalarm_id_and_token(tmp_path):
+    """Test `export_contains_groupalarm_id_and_token` behavior."""
     path = tmp_path / "test.xlsx"
     export_appointments([_make_appt(id_=42)], path)
 
@@ -50,12 +53,14 @@ def test_export_contains_groupalarm_id_and_token(tmp_path):
 
 
 def test_export_empty_list_raises(tmp_path):
+    """Test `export_empty_list_raises` behavior."""
     path = tmp_path / "test.xlsx"
     with pytest.raises(ValueError, match="No appointments"):
         export_appointments([], path)
 
 
 def test_export_multiple_appointments(tmp_path):
+    """Test `export_multiple_appointments` behavior."""
     path = tmp_path / "test.xlsx"
     appts = [_make_appt(id_=i, name=f"Appt {i}") for i in range(1, 4)]
     export_appointments(appts, path)
@@ -68,6 +73,7 @@ def test_export_multiple_appointments(tmp_path):
 
 
 def test_export_appointment_without_token(tmp_path):
+    """Test `export_appointment_without_token` behavior."""
     path = tmp_path / "test.xlsx"
     appt = _make_appt(description="no token here")
     export_appointments([appt], path)

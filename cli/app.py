@@ -45,6 +45,7 @@ class GroupAlarmApp(App):
         dry_run: bool = False,
         **kwargs,
     ) -> None:
+        """Initialize the GroupAlarmApp instance."""
         super().__init__(**kwargs)
         self._client = client
         self._config = config
@@ -56,6 +57,7 @@ class GroupAlarmApp(App):
 
     def on_mount(self) -> None:
         # Ensure we have an org ID
+        """Handle the `mount` event callback."""
         if not self._org_id:
             self._org_id = self._config.organization_id
 
@@ -125,45 +127,54 @@ class GroupAlarmApp(App):
         )
 
     def action_focus_start_filter(self) -> None:
+        """Handle the `focus_start_filter` action."""
         screen = self.screen
         if hasattr(screen, "action_focus_start_filter"):
             screen.action_focus_start_filter()
 
     def action_search(self) -> None:
+        """Handle the `search` action."""
         screen = self.screen
         if hasattr(screen, "action_search"):
             screen.action_search()
 
     def action_new_appointment(self) -> None:
+        """Handle the `new_appointment` action."""
         screen = self.screen
         if hasattr(screen, "action_new_appointment"):
             screen.action_new_appointment()
 
     def action_delete_appointment(self) -> None:
+        """Handle the `delete_appointment` action."""
         screen = self.screen
         if hasattr(screen, "action_delete_appointment"):
             screen.action_delete_appointment()
 
     def action_export(self) -> None:
+        """Handle the `export` action."""
         screen = self.screen
         if hasattr(screen, "action_export"):
             screen.action_export()
 
     def action_add_importer_tokens(self) -> None:
+        """Handle the `add_importer_tokens` action."""
         screen = self.screen
         if hasattr(screen, "action_add_importer_tokens"):
             screen.action_add_importer_tokens()
 
     def action_import(self) -> None:
+        """Handle the `import` action."""
         screen = self.screen
         if hasattr(screen, "action_import"):
             screen.action_import()
 
     def action_help(self) -> None:
+        """Handle the `help` action."""
         from cli.screens.help_screen import HelpScreen
         self.push_screen(HelpScreen())
 
     def action_refresh(self) -> None:
+        """Handle the `refresh` action."""
         screen = self.screen
         if hasattr(screen, "action_refresh"):
             screen.action_refresh()

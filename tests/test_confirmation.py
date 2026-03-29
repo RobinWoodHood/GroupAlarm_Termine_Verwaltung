@@ -35,6 +35,7 @@ SAMPLE_APPOINTMENTS = [
 
 
 def _make_mock_client():
+    """Internal helper for `make_mock_client`."""
     client = MagicMock(spec=GroupAlarmClient)
     client.token = "test-token"
     client.dry_run = False
@@ -45,6 +46,7 @@ def _make_mock_client():
 
 
 def _make_app(client=None, dry_run=False):
+    """Internal helper for `make_app`."""
     if client is None:
         client = _make_mock_client()
     config = AppConfig(organization_id=100, date_range_days=30)
@@ -57,6 +59,7 @@ async def test_confirmation_dialog_confirm():
     result = None
 
     def on_dismiss(value):
+        """Handle the `dismiss` event callback."""
         nonlocal result
         result = value
 
@@ -82,6 +85,7 @@ async def test_confirmation_dialog_cancel():
     result = None
 
     def on_dismiss(value):
+        """Handle the `dismiss` event callback."""
         nonlocal result
         result = value
 
@@ -106,6 +110,7 @@ async def test_unsaved_changes_dialog_save():
     result = None
 
     def on_dismiss(value):
+        """Handle the `dismiss` event callback."""
         nonlocal result
         result = value
 
@@ -127,6 +132,7 @@ async def test_unsaved_changes_dialog_discard():
     result = None
 
     def on_dismiss(value):
+        """Handle the `dismiss` event callback."""
         nonlocal result
         result = value
 
@@ -148,6 +154,7 @@ async def test_unsaved_changes_dialog_cancel():
     result = None
 
     def on_dismiss(value):
+        """Handle the `dismiss` event callback."""
         nonlocal result
         result = value
 

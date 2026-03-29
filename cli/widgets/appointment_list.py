@@ -16,6 +16,7 @@ class AppointmentSelected(Message):
     """Posted when an appointment is selected."""
 
     def __init__(self, appointment_id: int) -> None:
+        """Initialize the AppointmentSelected instance."""
         super().__init__()
         self.appointment_id = appointment_id
 
@@ -24,6 +25,7 @@ class AppointmentHighlighted(Message):
     """Posted when the cursor moves to a different appointment row."""
 
     def __init__(self, appointment_id: int) -> None:
+        """Initialize the AppointmentHighlighted instance."""
         super().__init__()
         self.appointment_id = appointment_id
 
@@ -60,6 +62,7 @@ class AppointmentList(Widget):
     """
 
     def __init__(self, label_service=None, display_tz: str = "Europe/Berlin", **kwargs) -> None:
+        """Initialize the AppointmentList instance."""
         super().__init__(**kwargs)
         self._label_service = label_service
         self._appointments: list[Appointment] = []
@@ -68,6 +71,7 @@ class AppointmentList(Widget):
         self._arrow_indicator: Static | None = None
 
     def compose(self) -> ComposeResult:
+        """Execute `compose`."""
         arrow = Static("→ Detail", id="list-arrow-right", classes="pane-arrow")
         self._arrow_indicator = arrow
         yield arrow
@@ -78,6 +82,7 @@ class AppointmentList(Widget):
         yield table
 
     def _fmt_dt(self, dt: datetime | None) -> str:
+        """Internal helper for `fmt_dt`."""
         if dt is None:
             return ""
         result = format_de_datetime(dt, tz_name=self._display_tz)
@@ -90,6 +95,7 @@ class AppointmentList(Widget):
         return result.text
 
     def update_appointments(self, appointments: list[Appointment]) -> None:
+        """Execute `update_appointments`."""
         self._appointments = appointments
         table = self.query_one("#appt-table", DataTable)
         table.clear()
@@ -107,6 +113,7 @@ class AppointmentList(Widget):
             table.add_row(name, start, end, labels, key=str(appt.id))
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
+        """Handle the `data_table_row_selected` event callback."""
         if event.row_key and event.row_key.value:
             try:
                 appt_id = int(event.row_key.value)
@@ -115,6 +122,7 @@ class AppointmentList(Widget):
                 pass
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
+        """Handle the `data_table_row_highlighted` event callback."""
         if event.row_key and event.row_key.value:
             try:
                 appt_id = int(event.row_key.value)
@@ -123,6 +131,7 @@ class AppointmentList(Widget):
                 pass
 
     def get_appointment_at_cursor(self) -> int | None:
+        """Execute `get_appointment_at_cursor`."""
         table = self.query_one("#appt-table", DataTable)
         if table.row_count == 0:
             return None
@@ -133,6 +142,7 @@ class AppointmentList(Widget):
             return None
 
     def set_focus_state(self, focused: bool) -> None:
+        """Execute `set_focus_state`."""
         if focused == self._focused:
             return
         self._focused = focused
@@ -142,6 +152,7 @@ class AppointmentList(Widget):
             arrow.set_class(focused, "active")
 
     def _ensure_arrow_indicator(self) -> Static | None:
+        """Internal helper for `ensure_arrow_indicator`."""
         if self._arrow_indicator is None:
             try:
                 self._arrow_indicator = self.query_one("#list-arrow-right", Static)

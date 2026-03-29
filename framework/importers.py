@@ -27,6 +27,7 @@ class ExcelImporter:
         self._df = None
 
     def _load(self):
+        """Internal helper for `load`."""
         if self._df is None:
             # pandas returns a dict of DataFrames for sheet_name=None.
             # For this importer, None means "first sheet".
@@ -91,6 +92,7 @@ class CSVImporter:
         self._detected_encoding = None
 
     def _load(self):
+        """Internal helper for `load`."""
         if self._df is None:
             encodings_to_try = [self.encoding, 'utf-8', 'utf-8-sig', 'utf-16', 'latin-1', 'cp1252']
             last_exc = None

@@ -55,6 +55,7 @@ class EditInput(Input):
     ]
 
     def action_accept_or_next(self) -> None:
+        """Handle the `accept_or_next` action."""
         if self.cursor_at_end and self._suggestion:
             self.value = self._suggestion
             self.cursor_position = len(self.value)
@@ -62,11 +63,13 @@ class EditInput(Input):
             self.screen.focus_next()
 
     def action_focus_prev_field(self) -> None:
+        """Handle the `focus_prev_field` action."""
         focusable = self._edit_focusable()
         if focusable and focusable[0] is not self:
             self.screen.focus_previous()
 
     def action_focus_next_field(self) -> None:
+        """Handle the `focus_next_field` action."""
         focusable = self._edit_focusable()
         if focusable and focusable[-1] is not self:
             self.screen.focus_next()
@@ -94,6 +97,7 @@ class BoundaryTextArea(TextArea):
     ]
 
     def action_cursor_up_or_prev(self) -> None:
+        """Handle the `cursor_up_or_prev` action."""
         row, _col = self.cursor_location
         if row == 0:
             focusable = self._edit_focusable()
@@ -103,6 +107,7 @@ class BoundaryTextArea(TextArea):
             self.action_cursor_up()
 
     def action_cursor_down_or_next(self) -> None:
+        """Handle the `cursor_down_or_next` action."""
         row, _col = self.cursor_location
         if row >= self.document.line_count - 1:
             focusable = self._edit_focusable()
@@ -124,10 +129,12 @@ class LabelSuggester(Suggester):
     """Suggest label completions for the last comma-separated token."""
 
     def __init__(self, label_names: list[str]) -> None:
+        """Initialize the LabelSuggester instance."""
         super().__init__(use_cache=False, case_sensitive=False)
         self._names = sorted(label_names)
 
     async def get_suggestion(self, value: str) -> str | None:
+        """Execute `get_suggestion`."""
         if "," in value:
             prefix, _, current = value.rpartition(",")
             leading = prefix + ", "
@@ -148,10 +155,12 @@ class UserSuggester(Suggester):
     """Suggest user names for the last comma-separated token."""
 
     def __init__(self, display_names: list[str]) -> None:
+        """Initialize the UserSuggester instance."""
         super().__init__(use_cache=False, case_sensitive=False)
         self._names = sorted(display_names)
 
     async def get_suggestion(self, value: str) -> str | None:
+        """Execute `get_suggestion`."""
         if "," in value:
             prefix, _, current = value.rpartition(",")
             leading = prefix + ", "
@@ -197,6 +206,7 @@ class EditFormState:
     conversion_warnings: List[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
+        """Internal helper for `_post_init__`."""
         self.label_directory = list(self.label_directory)
         self._label_lookup = {label.name.lower(): label for label in self.label_directory}
 
@@ -208,6 +218,7 @@ class EditFormState:
         label_directory: Sequence[LabelReference] | None = None,
         display_timezone: str = DEFAULT_DISPLAY_TZ,
     ) -> "EditFormState":
+        """Execute `from_appointment`."""
         state = cls(
             appointment=appt,
             timezone=display_timezone,
@@ -217,6 +228,7 @@ class EditFormState:
         return state
 
     def _hydrate_from_appointment(self) -> None:
+        """Internal helper for `hydrate_from_appointment`."""
         self.start_date, self.start_time = self._format_dt(self.appointment.startDate)
         self.end_date, self.end_time = self._format_dt(self.appointment.endDate)
         self.notification_date, self.notification_time = self._format_dt(self.appointment.notificationDate)
@@ -228,6 +240,7 @@ class EditFormState:
         self.invalid_labels = set()
 
     def _format_dt(self, value: datetime | None) -> tuple[str, str]:
+        """Internal helper for `format_dt`."""
         if value is None:
             return "", ""
         result = format_de_datetime(value, tz_name=self.timezone)
@@ -239,6 +252,7 @@ class EditFormState:
         return result.text, ""
 
     def apply_reminder(self, value: int | str | None, unit: str | None = None) -> None:
+        """Execute `apply_reminder`."""
         if unit:
             self.reminder.unit = unit
         if value in (None, ""):
@@ -265,12 +279,14 @@ class EditFormState:
             self.reminder.warning = str(exc)
 
     def apply_label_tokens(self, tokens: Sequence[str]) -> None:
+        """Execute `apply_label_tokens`."""
         normalized = [token.strip() for token in tokens if token and token.strip()]
         self.label_tokens = normalized
         lookup = self._label_lookup
         self.invalid_labels = {token for token in normalized if token.lower() not in lookup}
 
     def validate_temporal_ordering(self) -> List[str]:
+        """Execute `validate_temporal_ordering`."""
         errors: List[str] = []
         start = self._parse_required(self.start_date, self.start_time, "Startzeit", errors)
         end = self._parse_required(self.end_date, self.end_time, "Endzeit", errors)
@@ -288,6 +304,7 @@ class EditFormState:
         label: str,
         errors: List[str],
     ) -> datetime | None:
+        """Internal helper for `parse_required`."""
         date_value = (date_text or "").strip()
         time_value = (time_text or "").strip() or "00:00"
         if not date_value:
@@ -305,6 +322,7 @@ class EditFormState:
         time_text: str,
         errors: List[str],
     ) -> datetime | None:
+        """Internal helper for `parse_optional`."""
         date_value = (date_text or "").strip()
         if not date_value:
             return None
@@ -407,12 +425,14 @@ class DetailPanel(Widget):
     class SaveRequested(Message):
         """Posted when the user requests to save changes."""
         def __init__(self, appointment: Appointment, old_values: dict, new_values: dict) -> None:
+            """Initialize the SaveRequested instance."""
             super().__init__()
             self.appointment = appointment
             self.old_values = old_values
             self.new_values = new_values
 
     def __init__(self, **kwargs) -> None:
+        """Initialize the DetailPanel instance."""
         super().__init__(**kwargs)
         self._current_appointment: Optional[Appointment] = None
         self._label_service = None
@@ -442,21 +462,26 @@ class DetailPanel(Widget):
 
     @property
     def edit_mode(self) -> bool:
+        """Execute `edit_mode`."""
         return self._edit_mode
 
     @property
     def create_mode(self) -> bool:
+        """Execute `create_mode`."""
         return self._create_mode
 
     @property
     def dirty(self) -> bool:
+        """Execute `dirty`."""
         return self._dirty
 
     @property
     def current_appointment(self) -> Optional[Appointment]:
+        """Execute `current_appointment`."""
         return self._current_appointment
 
     def compose(self) -> ComposeResult:
+        """Execute `compose`."""
         arrow = Static("← Liste", id="detail-arrow-left", classes="pane-arrow")
         self._arrow_indicator = arrow
         yield arrow
@@ -1074,6 +1099,7 @@ class DetailPanel(Widget):
             asyncio.create_task(self._restore_read_only_ui(was_create=True))
 
     def set_focus_state(self, focused: bool) -> None:
+        """Execute `set_focus_state`."""
         if focused == self._focused:
             return
         self._focused = focused
@@ -1087,6 +1113,7 @@ class DetailPanel(Widget):
             self._capture_focus_target()
 
     def focus_content(self) -> None:
+        """Execute `focus_content`."""
         self._focus_target_id = "#detail-scroll"
         try:
             scroller = self.query_one("#detail-scroll", VerticalScroll)
@@ -1095,6 +1122,7 @@ class DetailPanel(Widget):
             self.focus()
 
     def _restore_focus_target(self) -> None:
+        """Internal helper for `restore_focus_target`."""
         target_id = self._focus_target_id or "#detail-scroll"
         try:
             widget = self.query_one(target_id)
@@ -1103,6 +1131,7 @@ class DetailPanel(Widget):
             self.focus()
 
     def _capture_focus_target(self) -> None:
+        """Internal helper for `capture_focus_target`."""
         try:
             scroller = self.query_one("#detail-scroll", VerticalScroll)
             if scroller.has_focus:
@@ -1111,6 +1140,7 @@ class DetailPanel(Widget):
             pass
 
     def _ensure_arrow_indicator(self) -> Static | None:
+        """Internal helper for `ensure_arrow_indicator`."""
         if self._arrow_indicator is None:
             try:
                 self._arrow_indicator = self.query_one("#detail-arrow-left", Static)

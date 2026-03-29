@@ -15,6 +15,7 @@ DEFAULT_OUTPUT = Path("docs/API_REFERENCE.md")
 
 
 def safe_unparse(node: ast.AST | None) -> str:
+    """Execute `safe_unparse`."""
     if node is None:
         return ""
     unparse = getattr(ast, "unparse", None)
@@ -27,17 +28,20 @@ def safe_unparse(node: ast.AST | None) -> str:
 
 
 def clean_docstring(value: str | None) -> str:
+    """Execute `clean_docstring`."""
     if not value:
         return ""
     return os.linesep.join(line.rstrip() for line in value.strip().splitlines()).strip()
 
 
 def should_skip(path: Path) -> bool:
+    """Execute `should_skip`."""
     return any(part in SKIP_DIR_NAMES for part in path.parts)
 
 
 @dataclass
 class FunctionDoc:
+    """Container class `FunctionDoc`."""
     name: str
     signature: str
     docstring: str
@@ -45,6 +49,7 @@ class FunctionDoc:
 
 @dataclass
 class ClassDoc:
+    """Container class `ClassDoc`."""
     name: str
     docstring: str
     methods: List[FunctionDoc] = field(default_factory=list)
@@ -52,16 +57,19 @@ class ClassDoc:
 
 @dataclass
 class ModuleDoc:
+    """Container class `ModuleDoc`."""
     path: Path
     classes: List[ClassDoc] = field(default_factory=list)
     functions: List[FunctionDoc] = field(default_factory=list)
 
     @property
     def module_heading(self) -> str:
+        """Execute `module_heading`."""
         return str(self.path.as_posix())
 
 
 def format_arguments(args: ast.arguments) -> str:
+    """Execute `format_arguments`."""
     parts: List[str] = []
 
     positional: List[ast.arg] = list(args.posonlyargs) + list(args.args)
@@ -101,12 +109,14 @@ def format_arguments(args: ast.arguments) -> str:
 
 
 def build_function_doc(node: ast.FunctionDef | ast.AsyncFunctionDef) -> FunctionDoc:
+    """Execute `build_function_doc`."""
     sig = f"{node.name}({format_arguments(node.args)})"
     doc = clean_docstring(ast.get_docstring(node)) or "No docstring provided."
     return FunctionDoc(name=node.name, signature=sig, docstring=doc)
 
 
 def build_class_doc(node: ast.ClassDef) -> ClassDoc:
+    """Execute `build_class_doc`."""
     doc = clean_docstring(ast.get_docstring(node)) or "No docstring provided."
     methods: List[FunctionDoc] = []
     for body_item in node.body:
@@ -116,6 +126,7 @@ def build_class_doc(node: ast.ClassDef) -> ClassDoc:
 
 
 def parse_module(path: Path, *, root: Path) -> ModuleDoc | None:
+    """Execute `parse_module`."""
     try:
         source = path.read_text(encoding="utf-8")
     except UnicodeDecodeError:
@@ -141,6 +152,7 @@ def parse_module(path: Path, *, root: Path) -> ModuleDoc | None:
 
 
 def iter_python_files(root: Path) -> Iterable[Path]:
+    """Execute `iter_python_files`."""
     for path in root.rglob("*.py"):
         if should_skip(path):
             continue
@@ -148,6 +160,7 @@ def iter_python_files(root: Path) -> Iterable[Path]:
 
 
 def render_markdown(modules: Sequence[ModuleDoc]) -> str:
+    """Execute `render_markdown`."""
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     lines: List[str] = []
     lines.append("# Project API Reference")
@@ -184,6 +197,7 @@ def render_markdown(modules: Sequence[ModuleDoc]) -> str:
 
 
 def generate_docs(root: Path, output: Path) -> None:
+    """Execute `generate_docs`."""
     root = root.resolve()
     modules: List[ModuleDoc] = []
     for file in sorted(iter_python_files(root)):
@@ -200,6 +214,7 @@ def generate_docs(root: Path, output: Path) -> None:
 
 
 def parse_args() -> argparse.Namespace:
+    """Execute `parse_args`."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT, help="Destination Markdown file")
     parser.add_argument("--root", type=Path, default=Path.cwd(), help="Project root to scan")
@@ -207,6 +222,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
+    """Execute `main`."""
     args = parse_args()
     generate_docs(args.root.resolve(), args.output.resolve())
 

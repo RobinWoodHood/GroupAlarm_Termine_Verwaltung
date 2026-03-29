@@ -5,6 +5,7 @@ from framework.importers import CSVImporter, ExcelImporter
 
 
 def test_csv_importer_reads_cp1252(tmp_path):
+    """Test `csv_importer_reads_cp1252` behavior."""
     content = "Tag;Beginn;Ende;Thema;Teilnehmer\nDie;06.01.2026 19:00;10.03.2026 23:00;Test;1.TZ/ZTr TZ TZ\n"
     p = tmp_path / "test.csv"
     # write in cp1252 encoding to simulate Excel/Windows output
@@ -19,10 +20,12 @@ def test_csv_importer_reads_cp1252(tmp_path):
 
 
 def test_excel_importer_none_sheet_reads_first_sheet(monkeypatch):
+    """Test `excel_importer_none_sheet_reads_first_sheet` behavior."""
     calls: dict[str, object] = {}
     df = pd.DataFrame([{"name": "A"}])
 
     def _fake_read_excel(filename, sheet_name=0, header=0):
+        """Internal helper for `fake_read_excel`."""
         calls["sheet_name"] = sheet_name
         return df
 

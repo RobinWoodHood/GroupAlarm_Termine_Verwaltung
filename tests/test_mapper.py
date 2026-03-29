@@ -1,11 +1,23 @@
 import pandas as pd
 from framework.mapper import Mapper
 from framework.utils import parse_date
-from framework.label_mapper import map_labels_from_participants, DEFAULT_TOKEN_MAP
+from framework.label_mapper import map_labels_from_participants
+
+
+TEST_TOKEN_MAP = {
+    "1.TZ/ZTr TZ": 40436,
+    "1.TZ/B": 40427,
+    "1.TZ/FGr N": 40433,
+    "1.TZ/FGr E": 40429,
+    "UFB": [40428, 40431, 40434, 40435],
+    "KF CE": 40442,
+    "KF BE": 40441,
+}
 
 
 def test_mapper_parses_dates_and_labels():
     # build a pandas Series-like row
+    """Test `mapper_parses_dates_and_labels` behavior."""
     data = {
         'Beginn': '06.01.2026 19:00',
         'Ende': '06.01.2026 22:00',
@@ -22,7 +34,7 @@ def test_mapper_parses_dates_and_labels():
         'startDate': lambda r, helpers: helpers['parse_date'](r['Beginn'], fmt="%d.%m.%Y %H:%M", tz='Europe/Berlin'),
         'endDate': lambda r, helpers: helpers['parse_date'](r['Ende'], fmt="%d.%m.%Y %H:%M", tz='Europe/Berlin'),
         'organizationID': 13915,
-        'labelIDs': lambda r, helpers: map_labels_from_participants(r.get('Teilnehmer'), DEFAULT_TOKEN_MAP),
+        'labelIDs': lambda r, helpers: map_labels_from_participants(r.get('Teilnehmer'), TEST_TOKEN_MAP),
         'reminder': 60,
         'notificationDate': {'days_before': 5},
     }
@@ -40,6 +52,7 @@ def test_mapper_parses_dates_and_labels():
 
 
 def test_name_cleaning_removes_newlines():
+    """Test `name_cleaning_removes_newlines` behavior."""
     data = {
         'Beginn': '06.01.2026 19:00',
         'Ende': '06.01.2026 22:00',
@@ -55,7 +68,7 @@ def test_name_cleaning_removes_newlines():
         'startDate': lambda r, helpers: helpers['parse_date'](r['Beginn'], fmt="%d.%m.%Y %H:%M", tz='Europe/Berlin'),
         'endDate': lambda r, helpers: helpers['parse_date'](r['Ende'], fmt="%d.%m.%Y %H:%M", tz='Europe/Berlin'),
         'organizationID': 13915,
-        'labelIDs': lambda r, helpers: map_labels_from_participants(r.get('Teilnehmer'), DEFAULT_TOKEN_MAP),
+        'labelIDs': lambda r, helpers: map_labels_from_participants(r.get('Teilnehmer'), TEST_TOKEN_MAP),
     }
     mapper = Mapper(mapping, defaults={'timezone': 'Europe/Berlin', 'start_hour': 19, 'end_hour': 22, 'clean_name': True})
     appt = mapper.map_row(row)

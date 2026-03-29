@@ -113,6 +113,7 @@ class Mapper:
         tz = self.defaults.get("timezone", "UTC")
 
         def parse_field(spec, role: str):
+            """Execute `parse_field`."""
             if callable(spec):
                 # provide a helper that accepts the same kwargs as in _eval (hour, fmt, tz)
                 default_tz = tz
