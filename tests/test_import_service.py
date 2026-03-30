@@ -95,6 +95,42 @@ def test_parse_excel_tier1_valid(monkeypatch: pytest.MonkeyPatch, tmp_path: Path
     assert "GA-IMPORTER" in appt.description
 
 
+def test_parse_excel_tier1_ignores_feedback_columns(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    """Tier 1 import ignores extra feedback columns produced by the exporter."""
+    file_path = tmp_path / "sample.xlsx"
+    file_path.write_text("x", encoding="utf-8")
+
+    row_with_feedback = _tier1_row(
+        appt_id=None, token="[GA-IMPORTER:abcd1234|20260301000000|0abc]"
+    )
+    row_with_feedback["feedback_positive"] = "Alice\nBob"
+    row_with_feedback["feedback_negative"] = "Charlie"
+    row_with_feedback["feedback_no_response"] = "Dave"
+
+    class _LocalImporter(_ImporterStub):
+        """Container class `_LocalImporter`."""
+        def rows(self):
+            """Execute `rows`."""
+            return iter([row_with_feedback])
+
+    monkeypatch.setattr(import_service, "ExcelImporter", _LocalImporter)
+
+    session = import_service.parse_excel(
+        str(file_path),
+        import_config=None,
+        organization_id=100,
+        timezone="Europe/Berlin",
+    )
+
+    assert len(session.appointments) == 1
+    assert len(session.skipped_rows) == 0
+    appt = session.appointments[0]
+    assert appt.name == "Training A"
+    # Feedback data must not leak into any Appointment field
+    assert "Alice" not in (appt.description or "")
+    assert "Charlie" not in (appt.description or "")
+
+
 def test_parse_excel_tier1_skipped_rows(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     """Test `parse_excel_tier1_skipped_rows` behavior."""
     file_path = tmp_path / "sample.xlsx"
