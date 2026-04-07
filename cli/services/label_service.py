@@ -18,11 +18,13 @@ class LabelService:
         self._organization_id = organization_id
         self._labels: List[Dict[str, Any]] = []
         self._by_id: Dict[int, Dict[str, Any]] = {}
+        self._by_name: Dict[str, int] = {}
 
     def load(self) -> None:
         """Execute `load`."""
         self._labels = self._client.list_labels(self._organization_id, label_type="all")
         self._by_id = {label["id"]: label for label in self._labels}
+        self._by_name = {label["name"].lower(): label["id"] for label in self._labels}
         logger.info("Loaded %d labels for org %d", len(self._labels), self._organization_id)
 
     @property
@@ -47,6 +49,10 @@ class LabelService:
     def get_names_for_ids(self, label_ids: List[int]) -> str:
         """Execute `get_names_for_ids`."""
         return ", ".join(self.get_name(lid) for lid in label_ids)
+
+    def get_id_by_name(self, name: str) -> Optional[int]:
+        """Resolve a label name to its ID (case-insensitive). Returns None if not found."""
+        return self._by_name.get(name.lower())
 
     def get_directory(self) -> List[LabelReference]:
         """Return rich label references for filters/autocomplete."""

@@ -40,6 +40,7 @@ class ImportSession:
     appointments: list[Appointment]
     skipped_rows: list[SkippedRow] = field(default_factory=list)
     column_mapping_used: str = "tier1-default"
+    label_warnings: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -129,6 +130,50 @@ def _parse_label_ids(value) -> list[int]:
     return result
 
 
+def _parse_labels(
+    value,
+    label_resolver: "Callable[[str], int | None] | None" = None,
+) -> tuple[list[int], list[str]]:
+    """Parse comma-separated label names/IDs to (resolved_ids, warnings).
+
+    For each token:
+    1. Try int() first (backward compat with numeric ID exports).
+    2. If not numeric and resolver is provided, resolve by name (case-insensitive).
+    3. If resolver returns None, add a warning and skip the token.
+    """
+    if value is None:
+        return [], []
+    import pandas as pd
+
+    if isinstance(value, float) and pd.isna(value):
+        return [], []
+    s = str(value).strip()
+    if not s:
+        return [], []
+    result: list[int] = []
+    warnings: list[str] = []
+    for part in s.split(","):
+        part = part.strip()
+        if not part:
+            continue
+        # Try numeric ID first
+        try:
+            result.append(int(part))
+            continue
+        except ValueError:
+            pass
+        # Try name resolution
+        if label_resolver is not None:
+            resolved = label_resolver(part)
+            if resolved is not None:
+                result.append(resolved)
+            else:
+                warnings.append(f"Label '{part}' nicht gefunden")
+        else:
+            warnings.append(f"Label '{part}' nicht gefunden")
+    return result, warnings
+
+
 def _parse_bool(value) -> bool:
     """Parse boolean-ish value from Excel."""
     if isinstance(value, bool):
@@ -174,29 +219,31 @@ DEFAULT_IMPORT_COLUMNS: list[str] = [
 
 
 def _parse_row_tier1(
-    row, row_index: int, default_org_id: int, default_tz: str
-) -> tuple[Optional[Appointment], Optional[SkippedRow]]:
+    row, row_index: int, default_org_id: int, default_tz: str,
+    label_resolver: "Callable[[str], int | None] | None" = None,
+) -> tuple[Optional[Appointment], Optional[SkippedRow], list[str]]:
     """Parse a single row using the Tier 1 default column mapping.
 
-    Returns (appointment, None) on success or (None, skipped_row) on failure.
+    Returns (appointment, None, label_warnings) on success or
+    (None, skipped_row, []) on failure.
     """
     try:
         name = _safe_str(row.get("name"))
         if not name:
-            return None, SkippedRow(row_index=row_index, reason="Missing required field: name")
+            return None, SkippedRow(row_index=row_index, reason="Missing required field: name"), []
 
         description = _safe_str(row.get("description"))
 
         start_date = _parse_optional_datetime(row.get("startDate"))
         if start_date is None:
-            return None, SkippedRow(row_index=row_index, reason="Missing or invalid startDate")
+            return None, SkippedRow(row_index=row_index, reason="Missing or invalid startDate"), []
 
         end_date = _parse_optional_datetime(row.get("endDate"))
         if end_date is None:
-            return None, SkippedRow(row_index=row_index, reason="Missing or invalid endDate")
+            return None, SkippedRow(row_index=row_index, reason="Missing or invalid endDate"), []
 
         org_id = _parse_optional_int(row.get("organizationID")) or default_org_id
-        label_ids = _parse_label_ids(row.get("labelIDs"))
+        label_ids, label_warnings = _parse_labels(row.get("labelIDs"), label_resolver)
         is_public = _parse_bool(row.get("isPublic"))
         reminder = _parse_optional_int(row.get("reminder"))
         notification_date = _parse_optional_datetime(row.get("notificationDate"))
@@ -228,9 +275,9 @@ def _parse_row_tier1(
             feedbackDeadline=feedback_deadline,
             timezone=timezone_str,
         )
-        return appt, None
+        return appt, None, label_warnings
     except Exception as exc:
-        return None, SkippedRow(row_index=row_index, reason=str(exc))
+        return None, SkippedRow(row_index=row_index, reason=str(exc)), []
 
 
 # ---------------------------------------------------------------------------
@@ -308,6 +355,7 @@ def parse_excel(
     import_config: Optional[ImportConfig],
     organization_id: int,
     timezone: str,
+    label_resolver: "Callable[[str], int | None] | None" = None,
 ) -> ImportSession:
     """Parse an Excel file into appointments using the three-tier mapping strategy.
 
@@ -397,23 +445,27 @@ def parse_excel(
 
         appointments = []
         skipped_rows = []
+        all_label_warnings: list[str] = []
 
         for row_index, row in enumerate(importer.rows()):
-            parsed_appt, skipped_row = _parse_row_tier1(
-                row, row_index, organization_id, timezone
+            parsed_appt, skipped_row, row_label_warnings = _parse_row_tier1(
+                row, row_index, organization_id, timezone,
+                label_resolver=label_resolver,
             )
             if parsed_appt:
                 appointments.append(parsed_appt)
             elif skipped_row:
                 skipped_rows.append(skipped_row)
+            all_label_warnings.extend(row_label_warnings)
 
         if not appointments and not skipped_rows:
             raise ValueError(f"No data rows found in {file_path}")
 
         logger.info(
-            "Import parse complete (tier1): appointments=%d skipped=%d",
+            "Import parse complete (tier1): appointments=%d skipped=%d label_warnings=%d",
             len(appointments),
             len(skipped_rows),
+            len(all_label_warnings),
         )
 
         return ImportSession(
@@ -421,6 +473,7 @@ def parse_excel(
             appointments=appointments,
             skipped_rows=skipped_rows,
             column_mapping_used="tier1-default",
+            label_warnings=all_label_warnings,
         )
 
 

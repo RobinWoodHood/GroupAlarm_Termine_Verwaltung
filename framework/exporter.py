@@ -48,6 +48,7 @@ def export_appointments(
     output_path: Path,
     timezone: str = "Europe/Berlin",
     user_name_resolver: Callable[[int], str] | None = None,
+    label_name_resolver: Callable[[int], str] | None = None,
 ) -> Path:
     """Execute `export_appointments`."""
     if not appointments:
@@ -84,6 +85,7 @@ def export_appointments(
             _format_datetime(appt.startDate, timezone),
             _format_datetime(appt.endDate, timezone),
             appt.organizationID,
+            ",".join(label_name_resolver(lid) for lid in appt.labelIDs) if appt.labelIDs and label_name_resolver else
             ",".join(str(lid) for lid in appt.labelIDs) if appt.labelIDs else "",
             appt.isPublic,
             appt.reminder if appt.reminder is not None else "",

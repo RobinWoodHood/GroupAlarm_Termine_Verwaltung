@@ -203,6 +203,13 @@ class ImportPreviewScreen(Screen):
                 severity="warning",
             )
 
+        if self._import_session.label_warnings:
+            unique_warnings = sorted(set(self._import_session.label_warnings))
+            self.app.notify(
+                "\n".join(unique_warnings),
+                severity="warning",
+            )
+
         logger.info(
             "Import preview mounted: source=%s appointments=%d skipped=%d mapping=%s",
             self._import_session.source_path,

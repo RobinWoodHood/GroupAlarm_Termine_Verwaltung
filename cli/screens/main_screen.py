@@ -691,11 +691,15 @@ class MainScreen(Screen):
             user_name_resolver = None
             if self._user_service:
                 user_name_resolver = self._user_service.get_display_name
+            label_name_resolver = None
+            if self._label_service:
+                label_name_resolver = self._label_service.get_name
             export_appointments(
                 appointments,
                 output_path,
                 timezone=tz,
                 user_name_resolver=user_name_resolver,
+                label_name_resolver=label_name_resolver,
             )
             self.app.notify(f"Exported {len(appointments)} appointments to {output_path}", severity="information")
         except Exception as exc:
@@ -717,11 +721,15 @@ class MainScreen(Screen):
                 org_id = self._appt_service._organization_id
                 tz_name = self._config.timezone if self._config else "Europe/Berlin"
                 logger.info("Parsing import file: %s", path)
+                label_resolver = None
+                if self._label_service:
+                    label_resolver = self._label_service.get_id_by_name
                 session = parse_excel(
                     file_path=path,
                     import_config=import_cfg,
                     organization_id=org_id,
                     timezone=tz_name,
+                    label_resolver=label_resolver,
                 )
             except Exception as exc:
                 logger.exception("Import parse failed for file '%s'", path)

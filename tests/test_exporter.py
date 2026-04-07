@@ -113,3 +113,34 @@ def test_export_feedback_columns_use_names_comments_and_linebreaks(tmp_path):
     assert row[13] == "Alice Example (komme spaeter)\nBob Example"
     assert row[14] == "Cara Example (verhindert)"
     assert row[15] == "Dan Example"
+
+
+def test_export_label_names_with_resolver(tmp_path):
+    """Labels are exported as names when label_name_resolver is provided."""
+    path = tmp_path / "test.xlsx"
+    label_map = {1: "Zugführer", 2: "Bereitschaft"}
+    export_appointments(
+        [_make_appt()],
+        path,
+        label_name_resolver=lambda lid: label_map.get(lid, str(lid)),
+    )
+
+    from openpyxl import load_workbook
+    wb = load_workbook(path)
+    ws = wb.active
+    row = [cell.value for cell in ws[2]]
+    # labelIDs column (index 5)
+    assert row[5] == "Zugführer,Bereitschaft"
+
+
+def test_export_label_ids_without_resolver(tmp_path):
+    """Labels are exported as numeric IDs when no label_name_resolver is provided."""
+    path = tmp_path / "test.xlsx"
+    export_appointments([_make_appt()], path)
+
+    from openpyxl import load_workbook
+    wb = load_workbook(path)
+    ws = wb.active
+    row = [cell.value for cell in ws[2]]
+    # labelIDs column (index 5)
+    assert row[5] == "1,2"

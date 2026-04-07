@@ -257,6 +257,143 @@ def test_parse_excel_tier2_uses_mapping_file(monkeypatch: pytest.MonkeyPatch, tm
     assert session.appointments[0].name == "Tier2 Name"
 
 
+# ---------------------------------------------------------------------------
+# _parse_labels: name resolution tests
+# ---------------------------------------------------------------------------
+
+
+def test_parse_labels_resolves_names():
+    """Label names are resolved to IDs via the resolver."""
+    resolver = lambda name: {"Zugführer": 10, "Bereitschaft": 20}.get(name)
+    ids, warnings = import_service._parse_labels("Zugführer,Bereitschaft", resolver)
+    assert ids == [10, 20]
+    assert warnings == []
+
+
+def test_parse_labels_numeric_ids_without_resolver():
+    """Numeric IDs are parsed even without a resolver (backward compat)."""
+    ids, warnings = import_service._parse_labels("1,2,3", None)
+    assert ids == [1, 2, 3]
+    assert warnings == []
+
+
+def test_parse_labels_mixed_ids_and_names():
+    """Mixed numeric IDs and names both resolve correctly."""
+    resolver = lambda name: {"Zugführer": 10}.get(name)
+    ids, warnings = import_service._parse_labels("5,Zugführer", resolver)
+    assert ids == [5, 10]
+    assert warnings == []
+
+
+def test_parse_labels_unresolved_name_produces_warning():
+    """Unresolved names are dropped and produce warnings."""
+    resolver = lambda name: None
+    ids, warnings = import_service._parse_labels("Fake Label", resolver)
+    assert ids == []
+    assert len(warnings) == 1
+    assert "Fake Label" in warnings[0]
+
+
+def test_parse_labels_empty_and_none():
+    """None and empty string return empty results."""
+    assert import_service._parse_labels(None) == ([], [])
+    assert import_service._parse_labels("") == ([], [])
+
+
+# ---------------------------------------------------------------------------
+# parse_excel Tier 1: label name resolution
+# ---------------------------------------------------------------------------
+
+
+def _tier1_row_with_label_names(label_value: str = "Zugführer,Bereitschaft"):
+    """Row with label names instead of IDs."""
+    start = datetime(2026, 3, 1, 10, 0, tzinfo=timezone.utc)
+    end = datetime(2026, 3, 1, 12, 0, tzinfo=timezone.utc)
+    return _Row(
+        {
+            "name": "Training",
+            "description": "desc",
+            "startDate": _iso(start),
+            "endDate": _iso(end),
+            "organizationID": 100,
+            "labelIDs": label_value,
+            "isPublic": "true",
+            "reminder": "30",
+            "notificationDate": _iso(start),
+            "feedbackDeadline": "",
+            "timezone": "Europe/Berlin",
+            "groupalarm_id": None,
+            "ga_importer_token": "",
+        }
+    )
+
+
+def test_parse_excel_tier1_resolves_label_names(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    """Tier 1 import resolves label names to IDs via the resolver."""
+    file_path = tmp_path / "sample.xlsx"
+    file_path.write_text("x", encoding="utf-8")
+
+    class _LocalImporter(_ImporterStub):
+        def rows(self):
+            return iter([_tier1_row_with_label_names("Zugführer,Bereitschaft")])
+
+    monkeypatch.setattr(import_service, "ExcelImporter", _LocalImporter)
+
+    resolver = lambda name: {"zugführer": 10, "bereitschaft": 20}.get(name.lower())
+    session = import_service.parse_excel(
+        str(file_path), None, 100, "Europe/Berlin",
+        label_resolver=resolver,
+    )
+
+    assert len(session.appointments) == 1
+    assert session.appointments[0].labelIDs == [10, 20]
+    assert session.label_warnings == []
+
+
+def test_parse_excel_tier1_label_warnings(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    """Unresolved label names produce warnings in the ImportSession."""
+    file_path = tmp_path / "sample.xlsx"
+    file_path.write_text("x", encoding="utf-8")
+
+    class _LocalImporter(_ImporterStub):
+        def rows(self):
+            return iter([_tier1_row_with_label_names("Zugführer,Unbekannt")])
+
+    monkeypatch.setattr(import_service, "ExcelImporter", _LocalImporter)
+
+    resolver = lambda name: {"zugführer": 10}.get(name.lower())
+    session = import_service.parse_excel(
+        str(file_path), None, 100, "Europe/Berlin",
+        label_resolver=resolver,
+    )
+
+    assert len(session.appointments) == 1
+    assert session.appointments[0].labelIDs == [10]
+    assert len(session.label_warnings) == 1
+    assert "Unbekannt" in session.label_warnings[0]
+
+
+def test_parse_excel_tier1_numeric_ids_backward_compat(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    """Numeric label IDs still work without a resolver (backward compat)."""
+    file_path = tmp_path / "sample.xlsx"
+    file_path.write_text("x", encoding="utf-8")
+
+    class _LocalImporter(_ImporterStub):
+        def rows(self):
+            return iter([_tier1_row_with_label_names("1,2")])
+
+    monkeypatch.setattr(import_service, "ExcelImporter", _LocalImporter)
+
+    session = import_service.parse_excel(
+        str(file_path), None, 100, "Europe/Berlin",
+        label_resolver=None,
+    )
+
+    assert len(session.appointments) == 1
+    assert session.appointments[0].labelIDs == [1, 2]
+    assert session.label_warnings == []
+
+
 class _ClientStub:
     """Container class `_ClientStub`."""
     def __init__(self):
