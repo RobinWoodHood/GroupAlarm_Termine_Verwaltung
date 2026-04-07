@@ -21,7 +21,7 @@ class LabelService:
 
     def load(self) -> None:
         """Execute `load`."""
-        self._labels = self._client.list_labels(self._organization_id)
+        self._labels = self._client.list_labels(self._organization_id, label_type="all")
         self._by_id = {label["id"]: label for label in self._labels}
         logger.info("Loaded %d labels for org %d", len(self._labels), self._organization_id)
 

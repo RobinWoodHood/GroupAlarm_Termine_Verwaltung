@@ -102,7 +102,7 @@ async def test_app_startup_calls_list_labels():
     app = _make_app(client=client)
     async with app.run_test(size=(120, 40)) as pilot:
         await pilot.pause()
-        client.list_labels.assert_called_once_with(100)
+        client.list_labels.assert_called_once_with(100, label_type="all")
 
 
 @pytest.mark.asyncio
