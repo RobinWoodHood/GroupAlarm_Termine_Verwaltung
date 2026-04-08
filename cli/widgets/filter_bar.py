@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+from datetime import date
 from typing import Iterable, Sequence
 
 from textual.app import ComposeResult
@@ -78,6 +79,11 @@ class FilterBar(Widget):
         color: $text;
         text-style: bold;
     }
+    FilterBar #this-year-btn {
+        min-width: 14;
+        height: 3;
+        margin: 0 1 0 0;
+    }
     """
 
     search_text: reactive[str] = reactive("", init=False)
@@ -125,6 +131,7 @@ class FilterBar(Widget):
                     yield button
         with Horizontal(classes="filter-section"):
             yield Label("Datum (TT.MM.JJJJ):", classes="filter-label")
+            yield Button("Dieses Jahr", id="this-year-btn", variant="default")
             yield Input(
                 value=self.controls.start_date_text or self._default_start,
                 placeholder="Start (TT.MM.JJJJ)",
@@ -247,6 +254,16 @@ class FilterBar(Widget):
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle the `button_pressed` event callback."""
         btn_id = event.button.id or ""
+        if btn_id == "this-year-btn":
+            year = date.today().year
+            start_val = f"01.01.{year}"
+            end_val = f"31.12.{year}"
+            self.query_one("#start-date", Input).value = start_val
+            self.query_one("#end-date", Input).value = end_val
+            self.controls.start_date_text = start_val
+            self.controls.end_date_text = end_val
+            self.post_message(FilterChanged())
+            return
         if btn_id.startswith("label-"):
             try:
                 label_id = int(btn_id.removeprefix("label-"))

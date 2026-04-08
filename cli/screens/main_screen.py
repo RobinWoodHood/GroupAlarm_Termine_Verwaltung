@@ -96,6 +96,10 @@ class MainScreen(Screen):
         self._filter_controls = FilterControls(available_labels=initial_labels)
         if self._config and self._config.default_label_ids:
             self._filter_controls.selected_label_ids.update(self._config.default_label_ids)
+        today = date.today()
+        range_days = self._config.date_range_days if self._config else 30
+        self._filter_controls.start_date_text = today.strftime("%d.%m.%Y")
+        self._filter_controls.end_date_text = (today + timedelta(days=range_days)).strftime("%d.%m.%Y")
         self.navigation_state = NavigationState()
         self._startup_welcome_enabled = True
         if self._config is not None:
@@ -150,10 +154,20 @@ class MainScreen(Screen):
             self.app.notify(f"Failed to load appointments: {exc}", severity="error")
             return
         self._update_filter_labels()
-        self._active_start_date = None
-        self._active_end_date = None
+        self._active_start_date = self._parse_controls_date(self._filter_controls.start_date_text)
+        self._active_end_date = self._parse_controls_date(self._filter_controls.end_date_text)
         appt_list = self.query_one("#appt-list", AppointmentList)
         appt_list.update_appointments(self._appt_service.appointments)
+
+    def _parse_controls_date(self, text: str) -> date | None:
+        """Parse a TT.MM.JJJJ string from filter controls into a date, or None."""
+        text = (text or "").strip()
+        if not text:
+            return None
+        try:
+            return datetime.strptime(text, "%d.%m.%Y").date()
+        except ValueError:
+            return None
 
     def _validate_display_timezone(self) -> None:
         """Ensure the configured timezone is usable and warn when conversion falls back."""
@@ -254,7 +268,12 @@ class MainScreen(Screen):
 
         self._appt_service.set_label_filter(label_ids if label_ids else None)
         self._appt_service.set_search(search, include_description)
-        if start_ready or end_ready:
+
+        date_changed = (
+            (start_ready and current_start != self._active_start_date)
+            or (end_ready and current_end != self._active_end_date)
+        )
+        if date_changed:
             self._appt_service.set_date_filter(current_start, current_end)
 
         reload_needed = False

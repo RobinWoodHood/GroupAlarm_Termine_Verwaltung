@@ -82,3 +82,44 @@ async def test_shortcut_focus_works():
         await pilot.pause()
         search_input = fb.query_one("#search-input")
         assert search_input.has_focus
+
+
+@pytest.mark.asyncio
+async def test_this_year_button_sets_dates():
+    """Clicking 'Dieses Jahr' populates start/end date inputs with current year boundaries."""
+    from datetime import date
+
+    controls = FilterControls()
+    fb = FilterBar(labels=_make_labels(2), controls=controls)
+    app = _FilterBarTestApp(fb)
+
+    async with app.run_test(size=(120, 20)) as pilot:
+        await pilot.pause()
+        btn = fb.query_one("#this-year-btn")
+        await pilot.click(btn)
+        await pilot.pause()
+
+        year = date.today().year
+        start_input = fb.query_one("#start-date")
+        end_input = fb.query_one("#end-date")
+        assert start_input.value == f"01.01.{year}"
+        assert end_input.value == f"31.12.{year}"
+        assert controls.start_date_text == f"01.01.{year}"
+        assert controls.end_date_text == f"31.12.{year}"
+
+
+@pytest.mark.asyncio
+async def test_default_dates_shown_in_inputs():
+    """FilterBar constructed with default_start/default_end shows those values."""
+    controls = FilterControls()
+    controls.start_date_text = "08.04.2026"
+    controls.end_date_text = "07.07.2026"
+    fb = FilterBar(labels=_make_labels(2), controls=controls)
+    app = _FilterBarTestApp(fb)
+
+    async with app.run_test(size=(120, 20)) as pilot:
+        await pilot.pause()
+        start_input = fb.query_one("#start-date")
+        end_input = fb.query_one("#end-date")
+        assert start_input.value == "08.04.2026"
+        assert end_input.value == "07.07.2026"
