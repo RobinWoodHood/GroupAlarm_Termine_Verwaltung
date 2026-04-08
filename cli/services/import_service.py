@@ -230,16 +230,28 @@ def _parse_row_tier1(
     try:
         name = _safe_str(row.get("name"))
         if not name:
+            logger.warning(
+                "Tier1 parse error at row %d: Missing required field: name\nRow data: %s",
+                row_index, row.to_dict(),
+            )
             return None, SkippedRow(row_index=row_index, reason="Missing required field: name"), []
 
         description = _safe_str(row.get("description"))
 
         start_date = _parse_optional_datetime(row.get("startDate"))
         if start_date is None:
+            logger.warning(
+                "Tier1 parse error at row %d: Missing or invalid startDate\nRow data: %s",
+                row_index, row.to_dict(),
+            )
             return None, SkippedRow(row_index=row_index, reason="Missing or invalid startDate"), []
 
         end_date = _parse_optional_datetime(row.get("endDate"))
         if end_date is None:
+            logger.warning(
+                "Tier1 parse error at row %d: Missing or invalid endDate\nRow data: %s",
+                row_index, row.to_dict(),
+            )
             return None, SkippedRow(row_index=row_index, reason="Missing or invalid endDate"), []
 
         org_id = _parse_optional_int(row.get("organizationID")) or default_org_id
@@ -277,6 +289,10 @@ def _parse_row_tier1(
         )
         return appt, None, label_warnings
     except Exception as exc:
+        logger.warning(
+            "Tier1 parse error at row %d: %s\nRow data: %s",
+            row_index, exc, row.to_dict(),
+        )
         return None, SkippedRow(row_index=row_index, reason=str(exc)), []
 
 
@@ -422,6 +438,10 @@ def parse_excel(
                 appt = mapper.map_row(row)
                 appointments.append(appt)
             except Exception as exc:
+                logger.warning(
+                    "Tier2 parse error at row %d: %s\nRow data: %s",
+                    row_index, exc, row.to_dict(),
+                )
                 skipped_rows.append(SkippedRow(row_index=row_index, reason=str(exc)))
 
         if not appointments and not skipped_rows:
@@ -432,6 +452,13 @@ def parse_excel(
             len(appointments),
             len(skipped_rows),
         )
+        for sk in skipped_rows:
+            logger.warning("Skipped row %d: %s", sk.row_index, sk.reason)
+        for appt in appointments:
+            logger.debug(
+                "Parsed appointment: name=%r start=%s labels=%s",
+                appt.name, appt.startDate, appt.labelIDs,
+            )
 
         return ImportSession(
             source_path=os.path.abspath(file_path),
@@ -467,6 +494,15 @@ def parse_excel(
             len(skipped_rows),
             len(all_label_warnings),
         )
+        for sk in skipped_rows:
+            logger.warning("Skipped row %d: %s", sk.row_index, sk.reason)
+        for warn in all_label_warnings:
+            logger.warning("Label warning: %s", warn)
+        for appt in appointments:
+            logger.debug(
+                "Parsed appointment: name=%r start=%s labels=%s",
+                appt.name, appt.startDate, appt.labelIDs,
+            )
 
         return ImportSession(
             source_path=os.path.abspath(file_path),
