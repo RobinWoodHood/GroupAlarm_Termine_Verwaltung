@@ -14,6 +14,7 @@ Eine interaktive **Terminal-Oberfläche (TUI)** zum Verwalten von GroupAlarm-Ter
 - [Dry-Run-Modus](#dry-run-modus)
 - [Tests](#tests)
 - [API-Referenz](#api-referenz)
+- [FAQ — Häufige Fragen](#faq--häufige-fragen)
 - [Rechtliches & Lizenzen](#rechtliches--lizenzen)
 
 ---
@@ -189,6 +190,56 @@ Generierung:
 ```bash
 python scripts/generate_api_docs.py --root . --output docs/API_REFERENCE.md
 ```
+
+---
+
+## FAQ — Häufige Fragen
+
+### Warum schlägt der Import mit „label does not belong to organization" fehl?
+
+Der Import arbeitet immer gegen eine bestimmte **Organisations-ID** (`organization_id` in `.groupalarm.toml`). Beim eingebauten Excel-Export werden die Org-ID, die Termin-ID und der GA-IMPORTER-Token mit in die Datei geschrieben. Wenn du diese Datei anschließend in eine **andere Organisation** importierst, versucht das Tool, die bestehenden Termine per Token zu aktualisieren — und scheitert, weil die IDs und Labels zur alten Org gehören.
+
+**Lösung:** Wenn du Termine von einer Org in eine andere übertragen willst, lösche in der Excel-Datei folgende Spalten bzw. Werte:
+
+1. **Org-ID** — damit die Termine der neuen Org zugeordnet werden.
+2. **Termin-ID (`id`)** — damit keine bestehenden Termine überschrieben werden.
+3. **GA-IMPORTER-Token** (in der Beschreibung, Format `[GA-IMPORTER:…]`) — damit das Tool den Create-Pfad wählt statt den Update-Pfad.
+
+Nur dann werden die Termine als **neue Einträge** in der Ziel-Organisation angelegt.
+
+### Warum werden Termine als „Update" statt als „Neu" behandelt?
+
+Die Upload-Logik entscheidet in zwei Stufen, ob ein Termin aktualisiert oder neu angelegt wird:
+
+```
+Termin aus Excel
+│
+├─ GA-IMPORTER-Token in Beschreibung vorhanden?
+│  │
+│  ├─ JA → Update-Pfad
+│  │   └─ Server-Termine im gleichen Zeitfenster abfragen
+│  │       ├─ Genau 1 Treffer mit gleichem Token
+│  │       │   └─ Termin-ID vom Server übernehmen → PUT (Update)
+│  │       ├─ 0 Treffer → Fehlschlag („update skipped to avoid duplicates")
+│  │       └─ >1 Treffer → Fehlschlag („ambiguous match")
+│  │
+│  └─ NEIN → Create-Pfad
+│       ├─ Termin-ID gesetzt?
+│       │   └─ JA → Fehlschlag („no token, cannot perform safe update")
+│       └─ Termin-ID leer (None)?
+│           └─ Neuen Token generieren → POST (Erstellen)
+```
+
+**Wichtig:** Die Entscheidung Create vs. Update hängt **ausschließlich vom GA-IMPORTER-Token** ab, nicht von der Termin-ID. Die Termin-ID allein reicht nicht aus — ohne Token wird ein Update bewusst verweigert, weil IDs sich serverseitig ändern können und keine sichere Identifikation bieten.
+
+| Zustand in der Excel | Ergebnis |
+|---|---|
+| Kein Token, keine ID | **Neuer Termin** (Token wird automatisch erzeugt) |
+| Kein Token, ID vorhanden | **Fehlschlag** (unsichere Identität) |
+| Token vorhanden, keine ID | **Update** (Server-ID wird per Token-Lookup ermittelt) |
+| Token vorhanden, ID vorhanden | **Update** (Server-ID wird per Token-Lookup ermittelt, Excel-ID wird ignoriert) |
+
+Wenn du aus einem Export importierst und neue Termine erzeugen willst, entferne **sowohl den Token als auch die ID** aus der Excel-Datei.
 
 ---
 
