@@ -79,7 +79,7 @@ class FilterBar(Widget):
         color: $text;
         text-style: bold;
     }
-    FilterBar #this-year-btn {
+    FilterBar #until-end-year-btn {
         min-width: 14;
         height: 3;
         margin: 0 1 0 0;
@@ -130,8 +130,7 @@ class FilterBar(Widget):
                 for button in self._iter_label_buttons():
                     yield button
         with Horizontal(classes="filter-section"):
-            yield Label("Datum (TT.MM.JJJJ):", classes="filter-label")
-            yield Button("Dieses Jahr", id="this-year-btn", variant="default")
+            yield Label("Datumsfilter (TT.MM.JJJJ):", classes="filter-label")
             yield Input(
                 value=self.controls.start_date_text or self._default_start,
                 placeholder="Start (TT.MM.JJJJ)",
@@ -144,10 +143,11 @@ class FilterBar(Widget):
                 restrict=r"[0-9\.]*",
                 id="end-date",
             )
-            yield Label("Search:", classes="filter-label")
-            yield Input(value=self.controls.search_text, placeholder="Filter by name", id="search-input")
-            yield Label("Search in field description:", classes="filter-label")
+            yield Button("Bis Jahresende", id="until-end-year-btn", variant="default")
+            yield Label("Suche auch in \nBeschreibung:", classes="filter-label")
             yield Switch(value=self._search_description, id="search-desc-toggle")
+            # yield Label("Suche:", classes="filter-label")
+            yield Input(value=self.controls.search_text, placeholder="Suche nach...", id="search-input")
 
     def _normalize_label_refs(
         self, labels: Sequence[LabelReference | dict] | None
@@ -254,9 +254,11 @@ class FilterBar(Widget):
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle the `button_pressed` event callback."""
         btn_id = event.button.id or ""
-        if btn_id == "this-year-btn":
+        if btn_id == "until-end-year-btn":
             year = date.today().year
-            start_val = f"01.01.{year}"
+            month = date.today().month
+            day = date.today().day
+            start_val = f"{day:02d}.{month:02d}.{year}"
             end_val = f"31.12.{year}"
             self.query_one("#start-date", Input).value = start_val
             self.query_one("#end-date", Input).value = end_val

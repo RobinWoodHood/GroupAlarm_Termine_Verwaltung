@@ -95,16 +95,19 @@ async def test_this_year_button_sets_dates():
 
     async with app.run_test(size=(120, 20)) as pilot:
         await pilot.pause()
-        btn = fb.query_one("#this-year-btn")
+        btn = fb.query_one("#until-end-year-btn")
         await pilot.click(btn)
         await pilot.pause()
 
         year = date.today().year
+        month = date.today().month
+        day = date.today().day
+        year = date.today().year
         start_input = fb.query_one("#start-date")
         end_input = fb.query_one("#end-date")
-        assert start_input.value == f"01.01.{year}"
+        assert start_input.value == f"{day:02d}.{month:02d}.{year}"
         assert end_input.value == f"31.12.{year}"
-        assert controls.start_date_text == f"01.01.{year}"
+        assert controls.start_date_text == f"{day:02d}.{month:02d}.{year}"
         assert controls.end_date_text == f"31.12.{year}"
 
 
