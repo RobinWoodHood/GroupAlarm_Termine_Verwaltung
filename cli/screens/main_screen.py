@@ -148,14 +148,25 @@ class MainScreen(Screen):
     def _load_appointments(self) -> None:
         """Internal helper for `load_appointments`."""
         try:
-            self._appt_service.load()
+            filter_bar = self.query_one("#filter-bar", FilterBar)
+            start_date = self._parse_controls_date(filter_bar.start_date)
+            end_date = self._parse_controls_date(filter_bar.end_date)
+        except Exception:
+            start_date = self._parse_controls_date(self._filter_controls.start_date_text)
+            end_date = self._parse_controls_date(self._filter_controls.end_date_text)
+
+        start_dt = self._date_to_datetime(start_date)
+        end_dt = self._date_to_datetime(end_date, clamp_end=True)
+
+        try:
+            self._appt_service.load(start_dt, end_dt)
         except Exception as exc:
             logger.error("Failed to load appointments: %s", exc)
             self.app.notify(f"Failed to load appointments: {exc}", severity="error")
             return
         self._update_filter_labels()
-        self._active_start_date = self._parse_controls_date(self._filter_controls.start_date_text)
-        self._active_end_date = self._parse_controls_date(self._filter_controls.end_date_text)
+        self._active_start_date = start_date
+        self._active_end_date = end_date
         appt_list = self.query_one("#appt-list", AppointmentList)
         appt_list.update_appointments(self._appt_service.appointments)
 

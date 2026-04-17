@@ -510,6 +510,33 @@ async def test_date_filter_reload_calls_api_with_range():
 
 
 @pytest.mark.asyncio
+async def test_refresh_preserves_active_date_range_filters():
+    """T018: Refresh uses the currently entered start/end date filters."""
+    client = _make_mock_client()
+    app = _make_app(client=client)
+    async with app.run_test(size=(120, 40)) as pilot:
+        await pilot.pause()
+        from textual.widgets import Input
+
+        start_input = app.screen.query_one("#start-date", Input)
+        end_input = app.screen.query_one("#end-date", Input)
+
+        start_input.value = "22.03.2026"
+        end_input.value = "24.03.2026"
+        await pilot.pause()
+
+        # Clear any cached call args from startup load
+        client.list_appointments.reset_mock()
+        app.screen.action_refresh()
+        await pilot.pause()
+
+        assert client.list_appointments.call_count == 1
+        kwargs = client.list_appointments.call_args.kwargs
+        assert kwargs["start"].startswith("2026-03-22T00:00:00")
+        assert kwargs["end"].startswith("2026-03-25T00:00:00")
+
+
+@pytest.mark.asyncio
 async def test_label_buttons_show_only_used_labels():
     """Filter bar shows only labels that are assigned to appointments in the list."""
     client = _make_mock_client()
