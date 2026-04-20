@@ -4,22 +4,61 @@ Eine interaktive **Terminal-Oberfläche (TUI)** zum Verwalten von GroupAlarm-Ter
 
 ---
 
-## Inhaltsverzeichnis
+## 🚀 Schnellstart (für Anfänger)
 
-- [Installation](#installation)
-- [Konfiguration](#konfiguration)
-- [TUI starten](#tui-starten)
-- [Bedienung & Tastenkürzel](#bedienung--tastenkürzel)
-- [Excel-Import (Tier 1 & Tier 2)](#excel-import-tier-1--tier-2)
-- [Dry-Run-Modus](#dry-run-modus)
-- [Tests](#tests)
-- [API-Referenz](#api-referenz)
-- [FAQ — Häufige Fragen](#faq--häufige-fragen)
-- [Rechtliches & Lizenzen](#rechtliches--lizenzen)
+### Schritt 1: Python installieren
+
+Falls Python noch nicht installiert ist:
+
+1. Gehe auf **https://www.python.org/downloads/**
+2. Lade die neueste Version herunter (≥ 3.11)
+3. **Wichtig:** Bei der Installation muss die Option **"Add Python to PATH"** angehakt sein
+4. Klicke auf "Install Now"
+5. Nach der Installation kannst du das Fenster schließen
+
+### Schritt 2: Abhängigkeiten installieren
+
+1. Öffne im Projektverzeichnis die Datei **`install.bat`** (Doppelklick)
+2. Ein schwarzes Fenster öffnet sich und installiert automatisch alles Notwendige
+3. Das Fenster schließt sich automatisch, wenn fertig
+4. **Fertig!** Die Umgebung ist jetzt einsatzbereit
+
+### Schritt 3: Tool starten
+
+1. Doppelklick auf **`start.bat`** — das Tool startet sofort
+2. Oder: Öffne **`GroupAlarm TUI.bat.lnk`** (die Verknüpfung)
+
+### Schritt 4: Verknüpfung auf den Desktop legen (optional)
+
+So sparst du dir beim nächsten Mal das Suchen:
+
+1. Finde die Datei **`GroupAlarm TUI.bat.lnk`** im Projektverzeichnis
+2. Mache einen **Rechtsklick** darauf → **"Senden an"** → **"Desktop (Verknüpfung erstellen)"**
+3. Eine neue Verknüpfung erscheint auf deinem Desktop
+4. Jetzt kannst du das Tool jederzeit mit einem Doppelklick vom Desktop aus starten
 
 ---
 
-## Installation
+## Inhaltsverzeichnis
+
+- [🚀 Schnellstart (für Anfänger)](#-schnellstart-für-anfänger)
+- [📖 Technische Beschreibung](#-technische-beschreibung)
+  - [Installation (Fortgeschrittene)](#installation-fortgeschrittene)
+  - [Konfiguration](#konfiguration)
+  - [TUI starten](#tui-starten)
+  - [Bedienung & Tastenkürzel](#bedienung--tastenkürzel)
+  - [Excel-Import (Tier 1 & Tier 2)](#excel-import-tier-1--tier-2)
+  - [Dry-Run-Modus](#dry-run-modus)
+  - [Tests](#tests)
+  - [API-Referenz](#api-referenz)
+  - [FAQ — Häufige Fragen](#faq--häufige-fragen)
+  - [Rechtliches & Lizenzen](#rechtliches--lizenzen)
+
+---
+
+## 📖 Technische Beschreibung
+
+### Installation (Fortgeschrittene)
 
 **Voraussetzungen**: Python ≥ 3.11
 
