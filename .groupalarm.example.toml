@@ -21,6 +21,6 @@ label_ids = []
 # Standard-Dauer für neue Termine in Stunden
 appointment_duration_hours = 4
 
-[import]
-mapping_file = "import.example.py"
-sheet_name = "sheet_name_in_excel"
+# [import]
+# mapping_file = "import.example.py"
+# sheet_name = "sheet_name_in_excel"

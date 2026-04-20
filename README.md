@@ -26,16 +26,31 @@ Falls Python noch nicht installiert ist:
 ### Schritt 3: Tool starten
 
 1. Doppelklick auf **`start.bat`** — das Tool startet sofort
-2. Oder: Öffne **`GroupAlarm TUI.bat.lnk`** (die Verknüpfung)
+2. Alternativ kannst du auch eine Verknüpfung auf dem Desktop erstellen (siehe nächster Schritt)
 
-### Schritt 4: Verknüpfung auf den Desktop legen (optional)
+### Schritt 4: Eigene Desktop-Verknüpfung erstellen (optional)
 
-So sparst du dir beim nächsten Mal das Suchen:
+So erstellst du eine bequeme Verknüpfung auf deinem Desktop — ohne Dateien zu kopieren:
 
-1. Finde die Datei **`GroupAlarm TUI.bat.lnk`** im Projektverzeichnis
+### Schnell via Rechtsklick
+
+1. Öffne **`start.bat`** im Projektverzeichnis (im Explorer)
 2. Mache einen **Rechtsklick** darauf → **"Senden an"** → **"Desktop (Verknüpfung erstellen)"**
-3. Eine neue Verknüpfung erscheint auf deinem Desktop
-4. Jetzt kannst du das Tool jederzeit mit einem Doppelklick vom Desktop aus starten
+3. Eine neue Verknüpfung namens **"Verknüpfung mit start"** erscheint auf deinem Desktop
+4. Benenne sie um in **"GroupAlarm TUI"** (optional):
+   - Rechtsklick → "Umbenennen" → neuen Namen eingeben
+
+#### Icon der Verknüpfung ändern (optional)
+
+Um die Verknüpfung mit einem eigenen Icon zu versehen:
+
+1. **Rechtsklick** auf die Desktop-Verknüpfung → **"Eigenschaften"**
+2. Klicke auf den Button **"Anderes Symbol"** (oder **"Icon ändern"**)
+3. Wähle ein Icon aus:
+   - Windows Standard-Icons sind meist im `C:\Windows\System32\` Verzeichnis (z.B. `shell32.dll`)
+   - **Tipp:** Probiere diese Icons aus: `THW.svg.ico`
+4. Klicke **"OK"** → **"Übernehmen"** → **"OK"**
+
 
 ---
 
