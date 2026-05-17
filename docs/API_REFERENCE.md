@@ -1,6 +1,6 @@
 # Project API Reference
 
-_Generated automatically on 2026-03-29 01:05 UTC._
+_Generated automatically on 2026-04-20 18:36 UTC._
 
 Each section lists the classes and functions discovered per module. Methods are included under their respective classes.
 
@@ -114,6 +114,7 @@ Primary screen with list + detail split layout.
 - `compose(self)` — Execute `compose`.
 - `on_mount(self)` — Handle the `mount` event callback.
 - `_load_appointments(self)` — Internal helper for `load_appointments`.
+- `_parse_controls_date(self, text)` — Parse a TT.MM.JJJJ string from filter controls into a date, or None.
 - `_validate_display_timezone(self)` — Ensure the configured timezone is usable and warn when conversion falls back.
 - `_lock_ui(self)` — Show loading indicator and block mutation actions.
 - `_unlock_ui(self)` — Hide loading indicator and re-enable mutation actions.
@@ -226,11 +227,18 @@ Aggregate outcome of the full upload operation.
 - `_parse_optional_int(value)` — Parse a value to int, returning None for empty/NaN.
 - `_parse_optional_datetime(value)` — Parse ISO 8601 string to datetime, returning None for empty/NaN.
 - `_parse_label_ids(value)` — Parse comma-separated label IDs string to list[int].
+- `_parse_labels(value, label_resolver=None)` — Parse comma-separated label names/IDs to (resolved_ids, warnings).
+
+For each token:
+1. Try int() first (backward compat with numeric ID exports).
+2. If not numeric and resolver is provided, resolve by name (case-insensitive).
+3. If resolver returns None, add a warning and skip the token.
 - `_parse_bool(value)` — Parse boolean-ish value from Excel.
 - `_safe_str(value)` — Get string value, handling NaN/None.
-- `_parse_row_tier1(row, row_index, default_org_id, default_tz)` — Parse a single row using the Tier 1 default column mapping.
+- `_parse_row_tier1(row, row_index, default_org_id, default_tz, label_resolver=None)` — Parse a single row using the Tier 1 default column mapping.
 
-Returns (appointment, None) on success or (None, skipped_row) on failure.
+Returns (appointment, None, label_warnings) on success or
+(None, skipped_row, []) on failure.
 - `load_mapping_module(mapping_file)` — Load a Python mapping module and extract mapping + defaults dicts.
 
 Parameters
@@ -249,7 +257,7 @@ FileNotFoundError
     If the file does not exist.
 ValueError
     If the file is not ``.py``, has syntax errors, or lacks a ``mapping`` dict.
-- `parse_excel(file_path, import_config, organization_id, timezone)` — Parse an Excel file into appointments using the three-tier mapping strategy.
+- `parse_excel(file_path, import_config, organization_id, timezone, label_resolver=None)` — Parse an Excel file into appointments using the three-tier mapping strategy.
 
 Parameters
 ----------
@@ -306,6 +314,7 @@ Fetch labels from the API once and provide lookup by ID.
 - `get_name(self, label_id)` — Execute `get_name`.
 - `get_color(self, label_id)` — Execute `get_color`.
 - `get_names_for_ids(self, label_ids)` — Execute `get_names_for_ids`.
+- `get_id_by_name(self, name)` — Resolve a label name to its ID (case-insensitive). Returns None if not found.
 - `get_directory(self)` — Return rich label references for filters/autocomplete.
 
 ## cli/services/user_service.py
@@ -522,8 +531,15 @@ Returns (valid_ids, invalid_names).
 - `validate_fields(self)` — Validate the current appointment fields. Returns a list of error messages.
 - `get_label_warnings(self)` — Return label warning messages for the confirmation dialog.
 - `discard_changes(self)` — Revert all fields to original values and restore read-only view.
-- `_restore_read_only_ui(self, was_create=False)` — Remove edit Inputs and restore the Static content widget.
-- `_ensure_read_only_content(self)` — Ensure #detail-content exists, then re-render the current appointment.
+- `_sync_read_only_ui(self, was_create=False)` — Sync the read-only UI, ensuring #detail-content exists and is updated.
+
+This unified method replaces the old _restore_read_only_ui and _ensure_read_only_content.
+It ensures the #detail-content Static widget exists in the scroll container.
+If it exists, its content is updated in-place. If not, it is created and mounted.
+
+Args:
+    was_create: If True, shows help content. If False and no appointment,
+               shows help content; otherwise renders the current appointment.
 - `_show_help_content(self, content)` — Write help text into the given Static widget.
 - `show_help(self)` — Display help text when no appointment is selected.
 - `set_focus_state(self, focused)` — Execute `set_focus_state`.
@@ -788,7 +804,7 @@ Container class `AppConfig`.
 ### Functions
 
 - `_format_datetime(dt, tz_name)` — Internal helper for `format_datetime`.
-- `export_appointments(appointments, output_path, timezone='Europe/Berlin', user_name_resolver=None)` — Execute `export_appointments`.
+- `export_appointments(appointments, output_path, timezone='Europe/Berlin', user_name_resolver=None, label_name_resolver=None)` — Execute `export_appointments`.
 
 ## framework/importer_token.py
 
@@ -1167,6 +1183,21 @@ bar')
 
 - `_map_labels_from_framework(text, token_map)` — Delegate label mapping to framework.label_mapper at runtime.
 
+## import_tier1_with_labels_productive.py
+
+### Functions
+
+- `_safe_str(value)` — Get string value, handling NaN/None.
+- `_build_description(row)` — Build description and re-append GA-IMPORTER token if present.
+- `_parse_label_ids(value)` — Remap old-org label IDs to new-org label IDs via name matching.
+
+Flow per ID:
+  1. Look up name in OLD_LABEL_ID_TO_NAME  (old ID → name)
+  2. Look up new ID in NEW_LABEL_NAME_TO_ID (name → new ID)
+  3. If name not found in new org, skip (label has no equivalent).
+  4. If ID not in old dict at all, keep as-is (might already be a new ID).
+- `_parse_optional_int(value)` — Parse value to int, returning None for NaN/None/empty.
+
 ## scripts/generate_api_docs.py
 
 ### Classes
@@ -1239,6 +1270,7 @@ Container class `ModuleDoc`.
 - `test_label_filter_toggles_appointments()` — T018: Click label toggle button -> only matching appointments shown.
 - `test_date_filters_limit_appointments()` — T018: Setting start/end dates narrows the appointment list.
 - `test_date_filter_reload_calls_api_with_range()` — T018: Adjusting date inputs triggers a fresh API load with full range.
+- `test_refresh_preserves_active_date_range_filters()` — T018: Refresh uses the currently entered start/end date filters.
 - `test_label_buttons_show_only_used_labels()` — Filter bar shows only labels that are assigned to appointments in the list.
 - `test_arrow_keys_switch_focus_between_panes()` — Left/right arrows move focus between list and detail without losing selection.
 - `test_filter_shortcuts_focus_inputs()` — Ctrl+T focuses date, Ctrl+F focuses search.
@@ -1367,6 +1399,8 @@ Container class `_ClientStub`.
 - `test_export_multiple_appointments(tmp_path)` — Test `export_multiple_appointments` behavior.
 - `test_export_appointment_without_token(tmp_path)` — Test `export_appointment_without_token` behavior.
 - `test_export_feedback_columns_use_names_comments_and_linebreaks(tmp_path)` — Test `export_feedback_columns_use_names_comments_and_linebreaks` behavior.
+- `test_export_label_names_with_resolver(tmp_path)` — Labels are exported as names when label_name_resolver is provided.
+- `test_export_label_ids_without_resolver(tmp_path)` — Labels are exported as numeric IDs when no label_name_resolver is provided.
 
 ## tests/test_filter_bar.py
 
@@ -1387,6 +1421,8 @@ Container class `_FilterBarTestApp`.
 - `test_filter_bar_shows_all_labels()` — Test `filter_bar_shows_all_labels` behavior.
 - `test_zero_match_labels_show_indicator()` — Test `zero_match_labels_show_indicator` behavior.
 - `test_shortcut_focus_works()` — Test `shortcut_focus_works` behavior.
+- `test_this_year_button_sets_dates()` — Clicking 'Dieses Jahr' populates start/end date inputs with current year boundaries.
+- `test_default_dates_shown_in_inputs()` — FilterBar constructed with default_start/default_end shows those values.
 
 ## tests/test_import_config.py
 
@@ -1506,6 +1542,7 @@ Container class `_ClientStub`.
 - `_iso(dt)` — Internal helper for `iso`.
 - `_tier1_row(name='Training A', *, appt_id=None, token='')` — Internal helper for `tier1_row`.
 - `test_parse_excel_tier1_valid(monkeypatch, tmp_path)` — Test `parse_excel_tier1_valid` behavior.
+- `test_parse_excel_tier1_ignores_feedback_columns(monkeypatch, tmp_path)` — Tier 1 import ignores extra feedback columns produced by the exporter.
 - `test_parse_excel_tier1_skipped_rows(monkeypatch, tmp_path)` — Test `parse_excel_tier1_skipped_rows` behavior.
 - `test_parse_excel_empty_file_raises(monkeypatch, tmp_path)` — Test `parse_excel_empty_file_raises` behavior.
 - `test_load_mapping_module_valid(tmp_path)` — Test `load_mapping_module_valid` behavior.
@@ -1513,6 +1550,15 @@ Container class `_ClientStub`.
 - `test_load_mapping_module_syntax_error(tmp_path)` — Test `load_mapping_module_syntax_error` behavior.
 - `test_load_mapping_module_missing_mapping_attr(tmp_path)` — Test `load_mapping_module_missing_mapping_attr` behavior.
 - `test_parse_excel_tier2_uses_mapping_file(monkeypatch, tmp_path)` — Test `parse_excel_tier2_uses_mapping_file` behavior.
+- `test_parse_labels_resolves_names()` — Label names are resolved to IDs via the resolver.
+- `test_parse_labels_numeric_ids_without_resolver()` — Numeric IDs are parsed even without a resolver (backward compat).
+- `test_parse_labels_mixed_ids_and_names()` — Mixed numeric IDs and names both resolve correctly.
+- `test_parse_labels_unresolved_name_produces_warning()` — Unresolved names are dropped and produce warnings.
+- `test_parse_labels_empty_and_none()` — None and empty string return empty results.
+- `_tier1_row_with_label_names(label_value='Zugführer,Bereitschaft')` — Row with label names instead of IDs.
+- `test_parse_excel_tier1_resolves_label_names(monkeypatch, tmp_path)` — Tier 1 import resolves label names to IDs via the resolver.
+- `test_parse_excel_tier1_label_warnings(monkeypatch, tmp_path)` — Unresolved label names produce warnings in the ImportSession.
+- `test_parse_excel_tier1_numeric_ids_backward_compat(monkeypatch, tmp_path)` — Numeric label IDs still work without a resolver (backward compat).
 - `_appt(name, appt_id=None, description='desc')` — Internal helper for `appt`.
 - `test_upload_create_and_update_paths()` — Test `upload_create_and_update_paths` behavior.
 - `test_upload_token_not_found_fails_no_create()` — Test `upload_token_not_found_fails_no_create` behavior.

@@ -502,7 +502,7 @@ class DetailPanel(Widget):
         self._create_mode = False
         self._dirty = False
         self._modified_fields.clear()
-        self._render_read_only(appt, label_service)
+        asyncio.create_task(self._sync_read_only_ui(was_create=False))
 
     def _fmt_dt(self, dt: datetime | None) -> str:
         """Format a datetime in the configured display timezone using the shared formatter."""
@@ -587,11 +587,10 @@ class DetailPanel(Widget):
 
         try:
             content = self.query_one("#detail-content", Static)
+            content.update("\n".join(lines))
         except Exception:
-            # Widget doesn't exist yet (edit UI still mounted); schedule async re-mount
-            asyncio.create_task(self._ensure_read_only_content())
-            return
-        content.update("\n".join(lines))
+            # Widget doesn't exist; this should not happen if called from _sync_read_only_ui
+            pass
 
     def _resolve_participant_name(self, user_id: int | None) -> str:
         """Resolve a user ID to a display name via UserService."""
@@ -1050,35 +1049,38 @@ class DetailPanel(Widget):
         self._modified_fields.clear()
         self._form_state = None
         # Restore the Static content into the scroll container
-        asyncio.create_task(self._restore_read_only_ui(was_create))
+        asyncio.create_task(self._sync_read_only_ui(was_create))
 
-    async def _restore_read_only_ui(self, was_create: bool = False) -> None:
-        """Remove edit Inputs and restore the Static content widget."""
+    async def _sync_read_only_ui(self, was_create: bool = False) -> None:
+        """Sync the read-only UI, ensuring #detail-content exists and is updated.
+
+        This unified method replaces the old _restore_read_only_ui and _ensure_read_only_content.
+        It ensures the #detail-content Static widget exists in the scroll container.
+        If it exists, its content is updated in-place. If not, it is created and mounted.
+
+        Args:
+            was_create: If True, shows help content. If False and no appointment,
+                       shows help content; otherwise renders the current appointment.
+        """
         try:
             scroll = self.query_one("#detail-scroll", VerticalScroll)
         except Exception:
             return
-        await scroll.remove_children()
-        content = Static("", id="detail-content", classes="help-text")
-        await scroll.mount(content)
+
+        # Try to query for the existing detail-content widget
+        content = None
+        try:
+            content = scroll.query_one("#detail-content", Static)
+        except Exception:
+            # Widget doesn't exist; create and mount it
+            content = Static("", id="detail-content", classes="help-text")
+            await scroll.mount(content)
+
+        # Now update the content based on state
         if was_create or not self._current_appointment:
             self._show_help_content(content)
         else:
             self._render_read_only(self._current_appointment, self._label_service)
-
-    async def _ensure_read_only_content(self) -> None:
-        """Ensure #detail-content exists, then re-render the current appointment."""
-        try:
-            scroll = self.query_one("#detail-scroll", VerticalScroll)
-        except Exception:
-            return
-        await scroll.remove_children()
-        content = Static("", id="detail-content", classes="help-text")
-        await scroll.mount(content)
-        if self._current_appointment:
-            self._render_read_only(self._current_appointment, self._label_service)
-        else:
-            self._show_help_content(content)
 
     def _show_help_content(self, content: Static) -> None:
         """Write help text into the given Static widget."""
@@ -1091,12 +1093,7 @@ class DetailPanel(Widget):
         self._create_mode = False
         self._dirty = False
         self._modified_fields.clear()
-        try:
-            content = self.query_one("#detail-content", Static)
-            self._show_help_content(content)
-        except Exception:
-            # Content may not exist yet if still in edit UI; schedule restore
-            asyncio.create_task(self._restore_read_only_ui(was_create=True))
+        asyncio.create_task(self._sync_read_only_ui(was_create=True))
 
     def set_focus_state(self, focused: bool) -> None:
         """Execute `set_focus_state`."""
