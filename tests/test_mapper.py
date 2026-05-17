@@ -33,13 +33,12 @@ def test_mapper_parses_dates_and_labels():
         'description': lambda r, helpers: f"Ort: {r.get('Ort')}\nDienstart: {r.get('Dienstart')}\nTeilnehmer: {r.get('Teilnehmer')}",
         'startDate': lambda r, helpers: helpers['parse_date'](r['Beginn'], fmt="%d.%m.%Y %H:%M", tz='Europe/Berlin'),
         'endDate': lambda r, helpers: helpers['parse_date'](r['Ende'], fmt="%d.%m.%Y %H:%M", tz='Europe/Berlin'),
-        'organizationID': 13915,
         'labelIDs': lambda r, helpers: map_labels_from_participants(r.get('Teilnehmer'), TEST_TOKEN_MAP),
         'reminder': 60,
         'notificationDate': {'days_before': 5},
     }
 
-    mapper = Mapper(mapping, defaults={'timezone': 'Europe/Berlin', 'start_hour': 19, 'end_hour': 22})
+    mapper = Mapper(mapping, defaults={'timezone': 'Europe/Berlin', 'start_hour': 19, 'end_hour': 22, 'organizationID': 13915})
     appt = mapper.map_row(row)
 
     assert appt.name.startswith('ZTr Ausbildung')
@@ -67,12 +66,38 @@ def test_name_cleaning_removes_newlines():
         'description': 'Dienstart',
         'startDate': lambda r, helpers: helpers['parse_date'](r['Beginn'], fmt="%d.%m.%Y %H:%M", tz='Europe/Berlin'),
         'endDate': lambda r, helpers: helpers['parse_date'](r['Ende'], fmt="%d.%m.%Y %H:%M", tz='Europe/Berlin'),
-        'organizationID': 13915,
         'labelIDs': lambda r, helpers: map_labels_from_participants(r.get('Teilnehmer'), TEST_TOKEN_MAP),
     }
-    mapper = Mapper(mapping, defaults={'timezone': 'Europe/Berlin', 'start_hour': 19, 'end_hour': 22, 'clean_name': True})
+    mapper = Mapper(mapping, defaults={'timezone': 'Europe/Berlin', 'start_hour': 19, 'end_hour': 22, 'clean_name': True, 'organizationID': 13915})
     appt = mapper.map_row(row)
     # Name should not contain newline
     assert '\n' not in appt.name
     assert '  ' not in appt.name  # no double spaces
+
+
+def test_mapper_raises_error_if_organizationid_missing():
+    """Test that mapper raises ValueError if organizationID is not in defaults."""
+    import pytest
+    data = {
+        'Beginn': '06.01.2026 19:00',
+        'Ende': '06.01.2026 22:00',
+        'Thema': 'Rettungsplattformen',
+        'Ort': 'Unterkunft',
+        'Dienstart': 'S - Fachausbildung',
+        'Teilnehmer': '1.TZ/ZTr TZ TZ'
+    }
+    row = pd.Series(data)
+    mapping = {
+        'name': lambda r, helpers: f"{r.get('Dienstart')} - {r.get('Thema')}",
+        'description': 'Dienstart',
+        'startDate': lambda r, helpers: helpers['parse_date'](r['Beginn'], fmt="%d.%m.%Y %H:%M", tz='Europe/Berlin'),
+        'endDate': lambda r, helpers: helpers['parse_date'](r['Ende'], fmt="%d.%m.%Y %H:%M", tz='Europe/Berlin'),
+        'labelIDs': lambda r, helpers: map_labels_from_participants(r.get('Teilnehmer'), TEST_TOKEN_MAP),
+    }
+    # Note: organizationID deliberately NOT in defaults
+    mapper = Mapper(mapping, defaults={'timezone': 'Europe/Berlin', 'start_hour': 19, 'end_hour': 22})
+    
+    # Should raise ValueError with clear message
+    with pytest.raises(ValueError, match="organizationID must be set in defaults"):
+        mapper.map_row(row)
 

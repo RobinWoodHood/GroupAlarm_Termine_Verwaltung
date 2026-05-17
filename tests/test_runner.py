@@ -19,10 +19,9 @@ def test_runner_dry_run_does_not_require_token(tmp_path, caplog):
         'description': 'Teilnehmer',
         'startDate': lambda r, helpers: helpers['parse_date'](r['Beginn'], fmt="%d.%m.%Y %H:%M", tz='Europe/Berlin'),
         'endDate': lambda r, helpers: helpers['parse_date'](r['Ende'], fmt="%d.%m.%Y %H:%M", tz='Europe/Berlin'),
-        'organizationID': 13915,
         'labelIDs': lambda r, helpers: [40436] if 'ZTr' in (r.get('Teilnehmer') or '') else [],
     }
-    runner = Runner(importer, mapping, defaults={'timezone':'Europe/Berlin'}, dry_run=True)
+    runner = Runner(importer, mapping, defaults={'timezone':'Europe/Berlin', 'organizationID': 13915}, dry_run=True)
     # should not raise even though no token provided
     runner.run()
 
@@ -40,7 +39,6 @@ def test_runner_non_dry_run_calls_client(monkeypatch, tmp_path):
         'description': 'Teilnehmer',
         'startDate': lambda r, helpers: helpers['parse_date'](r['Beginn'], fmt="%d.%m.%Y %H:%M", tz='Europe/Berlin'),
         'endDate': lambda r, helpers: helpers['parse_date'](r['Ende'], fmt="%d.%m.%Y %H:%M", tz='Europe/Berlin'),
-        'organizationID': 13915,
         'labelIDs': lambda r, helpers: [40436] if 'ZTr' in (r.get('Teilnehmer') or '') else [],
     }
 
@@ -57,7 +55,7 @@ def test_runner_non_dry_run_calls_client(monkeypatch, tmp_path):
 
     monkeypatch.setattr('framework.runner.GroupAlarmClient', FakeClient)
 
-    runner = Runner(importer, mapping, defaults={'timezone':'Europe/Berlin'}, dry_run=False)
+    runner = Runner(importer, mapping, defaults={'timezone':'Europe/Berlin', 'organizationID': 13915}, dry_run=False)
     # should raise if no token provided
     with pytest.raises(ValueError):
         runner.run(prompt_token=False, token=None)
@@ -79,7 +77,6 @@ def test_runner_calls_update_when_id_present(monkeypatch, tmp_path):
         'description': 'Teilnehmer',
         'startDate': lambda r, helpers: helpers['parse_date'](r['Beginn'], fmt="%d.%m.%Y %H:%M", tz='Europe/Berlin'),
         'endDate': lambda r, helpers: helpers['parse_date'](r['Ende'], fmt="%d.%m.%Y %H:%M", tz='Europe/Berlin'),
-        'organizationID': 13915,
         'labelIDs': lambda r, helpers: [40436] if 'ZTr' in (r.get('Teilnehmer') or '') else [],
     }
 
@@ -96,7 +93,7 @@ def test_runner_calls_update_when_id_present(monkeypatch, tmp_path):
 
     monkeypatch.setattr('framework.runner.GroupAlarmClient', FakeClient)
 
-    runner = Runner(importer, mapping, defaults={'timezone':'Europe/Berlin'}, dry_run=False, id_column='groupalarm_id')
+    runner = Runner(importer, mapping, defaults={'timezone':'Europe/Berlin', 'organizationID': 13915}, dry_run=False, id_column='groupalarm_id')
     runner.run(prompt_token=False, token='tok')
     assert len(calls) == 1
     assert getattr(calls[0], 'id', None) == 42
@@ -114,7 +111,6 @@ def test_runner_writes_id_back_on_create(monkeypatch, tmp_path):
         'description': 'Teilnehmer',
         'startDate': lambda r, helpers: helpers['parse_date'](r['Beginn'], fmt="%d.%m.%Y %H:%M", tz='Europe/Berlin'),
         'endDate': lambda r, helpers: helpers['parse_date'](r['Ende'], fmt="%d.%m.%Y %H:%M", tz='Europe/Berlin'),
-        'organizationID': 13915,
         'labelIDs': lambda r, helpers: [40436] if 'ZTr' in (r.get('Teilnehmer') or '') else [],
     }
 
@@ -129,7 +125,7 @@ def test_runner_writes_id_back_on_create(monkeypatch, tmp_path):
 
     monkeypatch.setattr('framework.runner.GroupAlarmClient', FakeClient)
 
-    runner = Runner(importer, mapping, defaults={'timezone':'Europe/Berlin'}, dry_run=False, id_column='groupalarm_id')
+    runner = Runner(importer, mapping, defaults={'timezone':'Europe/Berlin', 'organizationID': 13915}, dry_run=False, id_column='groupalarm_id')
     runner.run(prompt_token=False, token='tok')
 
     # re-load the csv to check the written id
@@ -151,7 +147,6 @@ def test_runner_writes_id_back_on_update(monkeypatch, tmp_path):
         'description': 'Teilnehmer',
         'startDate': lambda r, helpers: helpers['parse_date'](r['Beginn'], fmt="%d.%m.%Y %H:%M", tz='Europe/Berlin'),
         'endDate': lambda r, helpers: helpers['parse_date'](r['Ende'], fmt="%d.%m.%Y %H:%M", tz='Europe/Berlin'),
-        'organizationID': 13915,
         'labelIDs': lambda r, helpers: [40436] if 'ZTr' in (r.get('Teilnehmer') or '') else [],
     }
 
@@ -166,7 +161,7 @@ def test_runner_writes_id_back_on_update(monkeypatch, tmp_path):
 
     monkeypatch.setattr('framework.runner.GroupAlarmClient', FakeClient)
 
-    runner = Runner(importer, mapping, defaults={'timezone':'Europe/Berlin'}, dry_run=False, id_column='groupalarm_id')
+    runner = Runner(importer, mapping, defaults={'timezone':'Europe/Berlin', 'organizationID': 13915}, dry_run=False, id_column='groupalarm_id')
     runner.run(prompt_token=False, token='tok')
 
     # re-load the csv to check the written updated id
@@ -189,7 +184,6 @@ def test_runner_creates_token_on_update_when_missing(monkeypatch, tmp_path):
         'description': 'Teilnehmer',
         'startDate': lambda r, helpers: helpers['parse_date'](r['Beginn'], fmt="%d.%m.%Y %H:%M", tz='Europe/Berlin'),
         'endDate': lambda r, helpers: helpers['parse_date'](r['Ende'], fmt="%d.%m.%Y %H:%M", tz='Europe/Berlin'),
-        'organizationID': 13915,
         'labelIDs': lambda r, helpers: [40436] if 'ZTr' in (r.get('Teilnehmer') or '') else [],
     }
 
@@ -207,7 +201,7 @@ def test_runner_creates_token_on_update_when_missing(monkeypatch, tmp_path):
 
     monkeypatch.setattr('framework.runner.GroupAlarmClient', FakeClient)
 
-    runner = Runner(importer, mapping, defaults={'timezone':'Europe/Berlin'}, dry_run=False, id_column='groupalarm_id', token_column='ga_importer_token')
+    runner = Runner(importer, mapping, defaults={'timezone':'Europe/Berlin', 'organizationID': 13915}, dry_run=False, id_column='groupalarm_id', token_column='ga_importer_token')
     runner.run(prompt_token=False, token='tok')
 
     import pandas as pd
@@ -231,7 +225,6 @@ def test_runner_writes_token_and_id_on_create(monkeypatch, tmp_path):
         'description': 'Teilnehmer',
         'startDate': lambda r, helpers: helpers['parse_date'](r['Beginn'], fmt="%d.%m.%Y %H:%M", tz='Europe/Berlin'),
         'endDate': lambda r, helpers: helpers['parse_date'](r['Ende'], fmt="%d.%m.%Y %H:%M", tz='Europe/Berlin'),
-        'organizationID': 13915,
         'labelIDs': lambda r, helpers: [40436] if 'ZTr' in (r.get('Teilnehmer') or '') else [],
     }
 
@@ -250,7 +243,7 @@ def test_runner_writes_token_and_id_on_create(monkeypatch, tmp_path):
 
     monkeypatch.setattr('framework.runner.GroupAlarmClient', FakeClient)
 
-    runner = Runner(importer, mapping, defaults={'timezone':'Europe/Berlin'}, dry_run=False, id_column='groupalarm_id', token_column='ga_importer_token')
+    runner = Runner(importer, mapping, defaults={'timezone':'Europe/Berlin', 'organizationID': 13915}, dry_run=False, id_column='groupalarm_id', token_column='ga_importer_token')
     runner.run(prompt_token=False, token='tok')
 
     import pandas as pd
@@ -277,7 +270,6 @@ def test_runner_token_lookup_on_update(monkeypatch, tmp_path):
         'description': 'Teilnehmer',
         'startDate': lambda r, helpers: helpers['parse_date'](r['Beginn'], fmt="%d.%m.%Y %H:%M", tz='Europe/Berlin'),
         'endDate': lambda r, helpers: helpers['parse_date'](r['Ende'], fmt="%d.%m.%Y %H:%M", tz='Europe/Berlin'),
-        'organizationID': 13915,
         'labelIDs': lambda r, helpers: [40436] if 'ZTr' in (r.get('Teilnehmer') or '') else [],
     }
 
@@ -297,12 +289,13 @@ def test_runner_token_lookup_on_update(monkeypatch, tmp_path):
             return {'id': 999}
         def list_appointments(self, start, end, type_='personal', organization_id=None):
             # return candidate where description contains token and id=999
-            """Execute `list_appointments`."""
+            """Execute `list_appointments`.
+"""
             return [{'id': 999, 'description': f"something {token} else"}]
 
     monkeypatch.setattr('framework.runner.GroupAlarmClient', FakeClient)
 
-    runner = Runner(importer, mapping, defaults={'timezone':'Europe/Berlin'}, dry_run=False, id_column='groupalarm_id', token_column='ga_importer_token')
+    runner = Runner(importer, mapping, defaults={'timezone':'Europe/Berlin', 'organizationID': 13915}, dry_run=False, id_column='groupalarm_id', token_column='ga_importer_token')
     runner.run(prompt_token=False, token='tok')
 
     import pandas as pd

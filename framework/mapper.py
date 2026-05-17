@@ -85,6 +85,9 @@ class Mapper:
     def map_row(self, row) -> Appointment:
         """Map a source row into an :class:`Appointment` instance.
 
+        organizationID must be provided in defaults (from config), never from mapping.
+        This enforces that organizational context comes only from configuration.
+
         Parameters
         ----------
         row : pandas.Series
@@ -94,6 +97,11 @@ class Mapper:
         -------
         Appointment
             The constructed :class:`Appointment` object ready for validation and API submission.
+
+        Raises
+        ------
+        ValueError
+            If organizationID is not set in defaults.
         """
         # required fields
         name = self._eval("name", row)
@@ -136,8 +144,10 @@ class Mapper:
         start = parse_field(start_spec, "start")
         end = parse_field(end_spec, "end")
 
-        # other fields
-        organizationID = self._eval("organizationID", row) or self.defaults.get("organizationID")
+        # organizationID: MUST come from defaults (config), never from mapping
+        organizationID = self.defaults.get("organizationID")
+        if organizationID is None:
+            raise ValueError("organizationID must be set in defaults (from .groupalarm.toml configuration)")
         labelIDs = self._eval("labelIDs", row) or self.defaults.get("labelIDs", [])
         reminder = self._eval("reminder", row) or self.defaults.get("reminder")
         notificationDate = None

@@ -38,7 +38,6 @@ mapping = {
     "endDate": lambda r, helpers: helpers["parse_date"](
         r["Ende"], fmt="%d.%m.%Y %H:%M:%S", tz="Europe/Berlin" # Example: parse German datetime format from 'Ende' column
     ),
-    "organizationID": 13915,
     "labelIDs": lambda r, helpers: _map_labels_from_framework(
         r.get("Teilnehmer"), DEFAULT_TOKEN_MAP # Example: map labels based on 'Teilnehmer' column using the token map
     ),

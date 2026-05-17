@@ -51,6 +51,79 @@ Um die Verknüpfung mit einem eigenen Icon zu versehen:
    - **Tipp:** Probiere diese Icons aus: `THW.svg.ico`
 4. Klicke **"OK"** → **"Übernehmen"** → **"OK"**
 
+### Schritt 5: Desktop-App unter Linux erstellen (optional)
+
+Unter Linux (z. B. Fedora KDE Plasma, Ubuntu, Debian) kannst du eine bequeme Desktop-Verknüpfung als Anwendung registrieren:
+
+#### Methode 1: Automatisch über GUI (einfach)
+
+1. Öffne deinen **Application Menu** oder **Application Launcher**
+2. Suche nach "Anwendungs-Editor" oder "Desktop Entry Editor"
+3. Erstelle einen neuen Eintrag mit folgenden Informationen:
+   - **Name**: `GroupAlarm Terminverwaltung`
+   - **Beschreibung**: `GroupAlarm Terminverwaltung TUI`
+   - **Befehl**: `konsole -e bash -c "cd /pfad/zum/projekt && ./start_groupalarm.sh"`
+   - **Icon**: Wähle `THW.svg.ico` oder ein anderes Icon aus deinem Projektverzeichnis
+4. Speichern und fertig!
+
+#### Methode 2: Manuell via Texteditor (vollständige Kontrolle)
+
+1. Öffne einen Texteditor und erstelle eine neue Datei:
+   ```bash
+   nano ~/.local/share/applications/groupalarm.desktop
+   ```
+
+2. Füge folgenden Inhalt ein (passe die Pfade an deine Installation an):
+   ```ini
+   [Desktop Entry]
+   Version=1.0
+   Type=Application
+   Name=GroupAlarm Terminverwaltung
+   Comment=GroupAlarm Terminverwaltung TUI
+   Exec=konsole -e bash -c "cd /pfad/zum/workspace/GroupAlarm_Termine_Verwaltung && ./start_groupalarm.sh; read -p 'Drücke Enter zum Schließen...' "
+   Icon=/pfad/zum/workspace/GroupAlarm_Termine_Verwaltung/THW.svg.ico
+   Terminal=false
+   Categories=Utility;Development;
+   Keywords=python;termin;verwaltung;
+   StartupNotify=true
+   ```
+
+3. Speichern (Ctrl+X → Y → Enter)
+
+4. Die Anwendung sollte jetzt in deinem **Application Menu** sichtbar sein
+
+#### Desktop-Entry-Felder erklärt
+
+| Feld | Beschreibung |
+|---|---|
+| `Version` | Version des Desktop Entry Standards (üblicherweise `1.0`) |
+| `Type` | `Application` für ausführbare Programme |
+| `Name` | Anwendungsname wie im Menü angezeigt |
+| `Comment` | Kurzbeschreibung (Tooltip) |
+| `Exec` | Befehl zum Starten der Anwendung |
+| `Icon` | Pfad zum Icon (absolut oder Name aus Icon-Theme) |
+| `Terminal` | `false` = verstecktes Terminal; `true` = sichtbares Terminal |
+| `Categories` | Menü-Kategorien (z. B. `Utility`, `Development`, `Office`) |
+| `Keywords` | Suchbegriffe zum Auffinden in der App-Suche |
+| `StartupNotify` | `true` = Loading-Cursor anzeigen während Start |
+
+#### Icon hinzufügen
+
+1. **Icon bereitstellen**: Kopiere eine Icon-Datei (`.ico`, `.png`, `.svg`) in dein Projektverzeichnis oder ein System-Verzeichnis
+2. **Icon-Pfad setzen**: 
+   - Absoluter Pfad: `/pfad/zum/workspace/GroupAlarm_Termine_Verwaltung/THW.svg.ico`
+   - Icon-Name (falls in Theme): `groupalarm-icon` (muss in `/usr/share/icons/` liegen)
+3. Speichern und die Desktop-App neustarten (oder `pkill -f groupalarm.desktop`)
+
+#### Verschiedene Desktop-Umgebungen
+
+Die Anwendung wird automatisch registriert in:
+- **KDE Plasma** (Fedora, openSUSE)
+- **GNOME** (Ubuntu, Fedora)
+- **Cinnamon** (Linux Mint)
+- **XFCE** (Xubuntu, Xfce4)
+
+Nach dem Erstellen der `.desktop`-Datei einfach den Application Launcher neu laden (oder neustarten).
 
 ---
 
