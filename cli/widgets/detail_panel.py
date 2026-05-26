@@ -1067,14 +1067,40 @@ class DetailPanel(Widget):
         except Exception:
             return
 
-        # Try to query for the existing detail-content widget
+        # Try to find existing #detail-content widget
         content = None
         try:
             content = scroll.query_one("#detail-content", Static)
         except Exception:
-            # Widget doesn't exist; create and mount it
-            content = Static("", id="detail-content", classes="help-text")
-            await scroll.mount(content)
+            # Widget doesn't exist; need to create it
+            # Remove all edit-mode widgets (by ID or CSS class) to clean up from a previous edit session
+            for child in list(scroll.children):
+                # Remove by ID: edit-header, edit-name, edit-description, etc.
+                if child.id and (child.id.startswith("edit-") or child.id == "edit-header"):
+                    try:
+                        await child.remove()
+                    except Exception:
+                        pass
+                # Remove by CSS class: edit-section, edit-label, edit-textarea, edit-input, edit-hint
+                elif hasattr(child, 'classes') and any(
+                    cls in child.classes for cls in 
+                    ["edit-section", "edit-label", "edit-textarea", "edit-input", "edit-hint"]
+                ):
+                    try:
+                        await child.remove()
+                    except Exception:
+                        pass
+            
+            # Now create and mount the fresh #detail-content Static widget
+            try:
+                content = Static("", id="detail-content", classes="help-text")
+                await scroll.mount(content)
+            except Exception:
+                # If mount fails (race condition), try to find the widget again
+                try:
+                    content = scroll.query_one("#detail-content", Static)
+                except Exception:
+                    return
 
         # Now update the content based on state
         if was_create or not self._current_appointment:
