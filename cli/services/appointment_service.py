@@ -223,3 +223,91 @@ class AppointmentService:
                 errors.append(f"{appt.name} (ID {appt.id}): {exc}")
                 logger.error("Failed to add token to %s: %s", appt.id, exc)
         return updated, skipped, errors
+
+    def group_participants_by_labels(self, appointment: Appointment, label_service: Any) -> Dict[str, Any]:
+        """Group appointment participants by labels and feedback status.
+
+        Returns a structure with:
+        - direct: list of participants without labelID (manually added)
+        - by_label: dict mapping label_id -> dict of label members, grouped by feedback
+        - label_names: dict mapping label_id -> label name
+        - duplicate_labels: dict mapping user_id -> list of label IDs where duplicates appear
+        - feedback_counts: dict with 'confirmed', 'declined', 'no_response' counts (unique users)
+
+        Parameters
+        ----------
+        appointment : Appointment
+            The appointment to analyze.
+        label_service : LabelService
+            The label service for label lookup.
+
+        Returns
+        -------
+        dict
+            Grouped participant structure.
+        """
+        direct = []
+        by_label: Dict[int, Dict[int, List[Dict[str, Any]]]] = {}
+        user_labels: Dict[int, set[int]] = {}  # user_id -> set of label_ids they appear in
+        all_feedback_status: Dict[int, int] = {}  # user_id -> feedback status
+
+        # Process each participant
+        for participant in appointment.participants:
+            user_id = participant.get("userID")
+            label_id = participant.get("labelID")
+            feedback = participant.get("feedback", 0)
+
+            if user_id is None:
+                continue
+
+            # Track feedback status per user
+            if user_id not in all_feedback_status:
+                all_feedback_status[user_id] = feedback
+
+            if not label_id or label_id == 0:
+                # Directly added participant
+                direct.append(participant)
+            else:
+                # Label-based participant
+                if label_id not in by_label:
+                    by_label[label_id] = {1: [], 2: [], 0: []}
+                by_label[label_id][feedback].append(participant)
+
+                # Track which labels this user appears in
+                if user_id not in user_labels:
+                    user_labels[user_id] = set()
+                user_labels[user_id].add(label_id)
+
+        # Identify duplicates (users appearing in multiple labels)
+        duplicate_labels: Dict[int, List[int]] = {}
+        for user_id, label_ids in user_labels.items():
+            if len(label_ids) > 1:
+                duplicate_labels[user_id] = sorted(label_ids)
+
+        # Calculate unique feedback counts
+        confirmed_users = set()
+        declined_users = set()
+        no_response_users = set()
+
+        for user_id, feedback in all_feedback_status.items():
+            if feedback == 1:
+                confirmed_users.add(user_id)
+            elif feedback == 2:
+                declined_users.add(user_id)
+            else:
+                no_response_users.add(user_id)
+
+        # Build label_names lookup
+        label_names = {lid: label_service.get_name(lid) for lid in by_label.keys()}
+
+        return {
+            "direct": direct,
+            "by_label": by_label,
+            "label_names": label_names,
+            "duplicate_labels": duplicate_labels,
+            "feedback_counts": {
+                "confirmed": len(confirmed_users),
+                "declined": len(declined_users),
+                "no_response": len(no_response_users),
+            },
+        }

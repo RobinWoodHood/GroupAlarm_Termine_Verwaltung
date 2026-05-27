@@ -54,6 +54,17 @@ class LabelService:
         """Resolve a label name to its ID (case-insensitive). Returns None if not found."""
         return self._by_name.get(name.lower())
 
+    def get_assignees(self, label_id: int) -> set[int]:
+        """Get the set of user IDs assigned to a label.
+
+        Returns an empty set if the label is not found or has no assignees.
+        """
+        label = self._by_id.get(label_id)
+        if label is None:
+            return set()
+        assignees = label.get("assignees", [])
+        return set(assignees) if assignees else set()
+
     def get_directory(self) -> List[LabelReference]:
         """Return rich label references for filters/autocomplete."""
 

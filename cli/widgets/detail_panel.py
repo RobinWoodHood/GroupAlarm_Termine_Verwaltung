@@ -437,6 +437,7 @@ class DetailPanel(Widget):
         self._current_appointment: Optional[Appointment] = None
         self._label_service = None
         self._user_service = None
+        self._appointment_service = None
         self._edit_mode: bool = False
         self._create_mode: bool = False
         self._dirty: bool = False
@@ -492,10 +493,23 @@ class DetailPanel(Widget):
                 id="detail-content",
             )
 
-    def show_appointment(self, appt: Appointment, label_service=None, display_tz: str | None = None) -> None:
-        """Display appointment in read-only mode."""
+    def show_appointment(self, appt: Appointment, label_service=None, appointment_service=None, display_tz: str | None = None) -> None:
+        """Display appointment in read-only mode.
+        
+        Parameters
+        ----------
+        appt : Appointment
+            The appointment to display.
+        label_service : LabelService, optional
+            The label service for label lookup.
+        appointment_service : AppointmentService, optional
+            The appointment service for participant grouping.
+        display_tz : str, optional
+            The timezone for display.
+        """
         self._current_appointment = appt
         self._label_service = label_service
+        self._appointment_service = appointment_service
         if display_tz:
             self._display_tz = display_tz
         self._edit_mode = False
@@ -567,18 +581,22 @@ class DetailPanel(Widget):
             lines.append("")
             lines.append(f"[dim]Wiederholung:[/dim] {_format_recurrence(appt.recurrence)}")
 
-        # Direct participants (labelID == 0 or None)
+        # Participants section
         if appt.participants:
-            direct = [p for p in appt.participants if not p.get("labelID")]
-            if direct:
-                lines.append("")
-                lines.append(f"[b]Direkte Teilnehmer[/b] ({len(direct)})")
-                for p in direct:
-                    name = self._resolve_participant_name(p.get("userID"))
-                    lines.append(f"  {name}")
-
-            # Feedback lists
-            lines.extend(self._build_feedback_lines(appt.participants))
+            # Try to use grouped rendering if services are available
+            if self._appointment_service and self._label_service:
+                lines.extend(self._build_grouped_participant_lines(appt))
+            else:
+                # Fallback to old rendering
+                direct = [p for p in appt.participants if not p.get("labelID")]
+                if direct:
+                    lines.append("")
+                    lines.append(f"[b]Direkte Teilnehmer[/b] ({len(direct)})")
+                    for p in direct:
+                        name = self._resolve_participant_name(p.get("userID"))
+                        lines.append(f"  {name}")
+                # Feedback lists
+                lines.extend(self._build_feedback_lines(appt.participants))
 
         lines.append("\n[dim]Press [b]e[/b] to edit[/dim]")
 
@@ -591,6 +609,81 @@ class DetailPanel(Widget):
         except Exception:
             # Widget doesn't exist; this should not happen if called from _sync_read_only_ui
             pass
+
+    def _build_grouped_participant_lines(self, appt: Appointment) -> list[str]:
+        """Build participant lines grouped by labels and feedback status.
+        
+        Returns
+        -------
+        list[str]
+            Rich markup lines for participants grouped by labels.
+        """
+        grouped = self._appointment_service.group_participants_by_labels(appt, self._label_service)
+        lines: list[str] = []
+        
+        # Direct participants (if any)
+        direct = grouped["direct"]
+        if direct:
+            lines.append("")
+            lines.append(f"[b]Direkte Teilnehmer[/b] ({len(direct)})")
+            for p in direct:
+                name = self._resolve_participant_name(p.get("userID"))
+                lines.append(f"  {name}")
+        
+        # Show user cache warning if UserService is empty
+        if self._user_service and not self._user_service.get_directory():
+            lines.append("")
+            lines.append("[dim italic]⚠ Benutzerdaten nicht verfügbar — IDs werden angezeigt[/dim italic]")
+        
+        # Participants by label
+        by_label = grouped["by_label"]
+        label_names = grouped["label_names"]
+        duplicate_labels = grouped["duplicate_labels"]
+        feedback_counts = grouped["feedback_counts"]
+        
+        # Map feedback status codes to count keys
+        status_to_count_key = {1: "confirmed", 2: "declined", 0: "no_response"}
+        FEEDBACK_LABELS = {1: "Zugesagt", 2: "Abgesagt", 0: "Keine Rückmeldung"}
+        
+        # For each feedback status, show all labels that have members in that status
+        for status_key in (1, 2, 0):
+            feedback_label = FEEDBACK_LABELS[status_key]
+            count = feedback_counts.get(status_to_count_key[status_key], 0)
+            
+            # Skip this feedback section if there are no participants in this status
+            if count == 0:
+                continue
+            
+            lines.append("")
+            lines.append(f"[b]{feedback_label}[/b] ({count})")
+            
+            # Show labels in the order they appear in the appointment
+            for label_id in appt.labelIDs:
+                if label_id not in by_label:
+                    continue
+                
+                participants_in_status = by_label[label_id][status_key]
+                if not participants_in_status:
+                    continue
+                
+                label_name = label_names.get(label_id, f"Label #{label_id}")
+                lines.append(f"  [dim]{label_name}[/dim]")
+                
+                for p in participants_in_status:
+                    user_id = p.get("userID")
+                    name = self._resolve_participant_name(user_id)
+                    
+                    # Add duplicate marker if user appears in multiple labels
+                    if user_id in duplicate_labels:
+                        num_labels = len(duplicate_labels[user_id])
+                        name = f"{name} (in {num_labels} Labels)"
+                    
+                    lines.append(f"    {name}")
+                    msg = p.get("feedbackMessage", "")
+                    if msg:
+                        lines.append(f"      [dim]\"{msg}\"[/dim]")
+        
+        return lines
 
     def _resolve_participant_name(self, user_id: int | None) -> str:
         """Resolve a user ID to a display name via UserService."""

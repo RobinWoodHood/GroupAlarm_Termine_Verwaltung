@@ -325,7 +325,7 @@ class MainScreen(Screen):
         if appt:
             self._selected_appointment_id = event.appointment_id
             display_tz = self._config.timezone if self._config else "Europe/Berlin"
-            detail.show_appointment(appt, self._label_service, display_tz=display_tz)
+            detail.show_appointment(appt, self._label_service, self._appt_service, display_tz=display_tz)
 
     def _select_appointment(self, appt_id: int) -> None:
         """Internal helper for `select_appointment`."""
@@ -336,7 +336,7 @@ class MainScreen(Screen):
         if appt:
             detail = self.query_one("#detail-panel", DetailPanel)
             display_tz = self._config.timezone if self._config else "Europe/Berlin"
-            detail.show_appointment(appt, self._label_service, display_tz=display_tz)
+            detail.show_appointment(appt, self._label_service, self._appt_service, display_tz=display_tz)
             # Enter/select in list → switch focus to detail panel
             self._focus_detail_panel()
 
